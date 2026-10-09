@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadVerse - Books & Audiobooks</title>
+  
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-color: #0a0a0c;
+      --card-bg: #141419;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #22222a;
+
+      /* Custom Badge Colors */
+      --badge-new: #2196F3;
+      --badge-trending: #E91E63;
+      --badge-premium: #f97316;
+      --badge-audio: #4CAF50;
+      --badge-rating: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); overflow-x: hidden; padding-bottom: 70px; }
+
+    /* Top Navigation Header */
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      height: 65px;
+      background: linear-gradient(180deg, rgba(10,10,12,0.95) 0%, rgba(10,10,12,0) 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4%;
+      z-index: 100;
+      transition: background 0.3s;
+    }
+    header.scrolled { background: var(--bg-color); border-bottom: 1px solid var(--border); }
+    
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    
+    .nav-links { display: flex; gap: 24px; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; display: flex; align-items: center; gap: 6px; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+
+    .user-actions { display: flex; align-items: center; gap: 18px; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; color: #fff; cursor: pointer; text-decoration: none; }
+
+    /* Hero Spotlight Book Showcase */
+    .hero {
+      position: relative;
+      height: 65vh;
+      min-height: 450px;
+      background: linear-gradient(90deg, var(--bg-color) 25%, rgba(10,10,12,0.7) 60%, transparent 100%), 
+                  url('https://i.postimg.cc/wjNQhXvh/the-11-47-file.png') center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      padding: 0 4%;
+    }
+    .hero-content { max-width: 580px; z-index: 2; }
+    .hero-badge { background: var(--accent); color: #fff; font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px; }
+    .hero h1 { font-size: 2.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 8px; }
+    .hero-author { color: var(--accent); font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; }
+    .hero-meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px; display: flex; gap: 15px; align-items: center; }
+    .hero-meta span { border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; background: rgba(0,0,0,0.5); }
+    .rating { color: #f59e0b; display: flex; align-items: center; gap: 4px; }
+    .hero p { color: #cbd5e1; font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+    .hero-btns { display: flex; gap: 12px; }
+    .btn { border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; transition: all 0.2s; }
+    .btn-primary { background-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background-color: var(--accent-hover); }
+    .btn-secondary { background-color: rgba(255, 255, 255, 0.1); color: var(--text-main); backdrop-filter: blur(10px); border: 1px solid var(--border); }
+    .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.2); }
+
+    /* Search & Filter Bar Section */
+    .search-section {
+      padding: 20px 4% 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: sticky;
+      top: 65px;
+      background: rgba(10, 10, 12, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 90;
+      border-bottom: 1px solid var(--border);
+    }
+    .search-input-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+    }
+    .search-input-wrapper i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+    .search-input-wrapper input {
+      width: 100%;
+      background: #141419;
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      padding: 12px 16px 12px 45px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input-wrapper input:focus {
+      border-color: var(--accent);
+    }
+    .category-pills {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .category-pills::-webkit-scrollbar { height: 4px; }
+    .category-pills::-webkit-scrollbar-thumb { background: #2a2a35; border-radius: 10px; }
+    .pill {
+      background: #141419;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 18px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .pill:hover, .pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Shelf Rows */
+    .content-section { padding: 20px 4%; }
+    .section-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+    
+    .row-container {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding-bottom: 12px;
+    }
+    .row-container::-webkit-scrollbar { height: 0px; }
+    .row-container::-webkit-scrollbar-thumb { background: #2a2a35; border-radius: 10px; }
+
+    /* Book Cards */
+    .card {
+      flex: 0 0 160px;
+      height: 250px;
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid var(--border);
+    }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); z-index: 10; border-color: var(--accent); }
+    .card img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .card-overlay {
+      position: absolute;
+      bottom: 0; left: 0; width: 100%;
+      background: linear-gradient(0deg, rgba(10,10,12,0.95) 0%, rgba(10,10,12,0.4) 70%, transparent 100%);
+      padding: 12px 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .card-overlay h4 { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+    .card-overlay p { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* TOP RIGHT CARD BADGE SYSTEM */
+    .card-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 5;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(4px);
+    }
+
+    .badge-new { background-color: var(--badge-new); }
+    .badge-trending { background-color: var(--badge-trending); }
+    .badge-premium { background-color: var(--badge-premium); }
+    .badge-audio { background-color: var(--badge-audio); }
+    .badge-rating { background-color: rgba(0, 0, 0, 0.75); color: var(--badge-rating); border: 1px solid rgba(245, 158, 11, 0.4); }
+
+    /* Progress Bar */
+    .progress-bar { width: 100%; height: 4px; background: #333; margin-top: 6px; border-radius: 2px; }
+    .progress { height: 100%; background: var(--accent); border-radius: 2px; }
+
+    /* Mobile Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; width: 100%;
+      height: 60px;
+      background-color: #0d0d11;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .bottom-nav-item i { font-size: 1.1rem; }
+    .bottom-nav-item.active { color: var(--accent); }
+
+    /* Bottom Nav Overlay Modals */
+    .nav-overlay-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 12, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      padding: 80px 5% 80px;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .nav-overlay-modal.active { display: flex; }
+    .nav-overlay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .nav-overlay-header h3 {
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero h1 { font-size: 2.1rem; }
+      .card { flex: 0 0 120px; height: 180px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <header id="navbar">
+    <a href="index.html" class="logo">
+      <i class="fa-solid fa-book-open-reader"></i> READVERSE
+    </a>
+    <ul class="nav-links">
+      <li><a href="#" class="active"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a href="#trending"><i class="fa-solid fa-fire"></i> Trending</a></li>
+      <li><a href="#originals"><i class="fa-solid fa-award"></i> Originals</a></li>
+      <li><a href="#students"><i class="fa-solid fa-graduation-cap"></i> Students</a></li>
+      <li><a href="#" onclick="handleBottomNav('library')"><i class="fa-solid fa-bookmark"></i> My Library</a></li>
+    </ul>
+    <div class="user-actions">
+      <a href="login.html" class="avatar" id="userAvatar">?</a>
+    </div>
+  </header>
+
+  <!-- Featured Book Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="fa-solid fa-bolt"></i> New ! AV BOOKS ORIGINAL
+      </div>
+      <h1>The 11:47 File</h1>
+      <div class="hero-author">by Tanmay</div>
+      <div class="hero-meta">
+        <div class="rating"><i class="fa-solid fa-star"></i> Not Rated Yet</div>
+        <span>Thriller</span>
+        <span>14 Pages</span>
+      </div>
+      <p>At 11:47 PM, Rohit receives a mysterious envelope containing a photo of himself at a destroyed building. Soon, his forgotten past, Nova, and a terrifying time loop begin to collide.</p>
+      <div class="hero-btns">
+        <button class="btn btn-primary" onclick="navigateToReader('0', 'text')">
+          <i class="fa-solid fa-book-open"></i> Start Reading
+        </button>
+        <button class="btn btn-secondary" onclick="toggleBookmark('0', 'The 11:47 File', 'https://i.postimg.cc/wjNQhXvh/the-11-47-file.png')">
+          <i class="fa-solid fa-plus"></i> Bookmark
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search and Category Filter Section -->
+  <div class="search-section">
+    <div class="search-input-wrapper">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" placeholder="Search by title, author, or category..." oninput="handleSearch()">
+    </div>
+    <div class="category-pills" id="categoryPills">
+      <button class="pill active" onclick="filterCategory('All')">All</button>
+      <button class="pill" onclick="filterCategory('Originals')">Originals</button>
+      <button class="pill" onclick="filterCategory('Horror')">Horror</button>
+      <button class="pill" onclick="filterCategory('Top Recommended')">Top Recommended</button>
+      <button class="pill" onclick="filterCategory('Trending')">Trending</button>
+      <button class="pill" onclick="filterCategory('New Publish')">New Publish</button>
+      <button class="pill" onclick="filterCategory('Romantic')">Romantic</button>
+      <button class="pill" onclick="filterCategory('For Students')">For Students</button>
+      <button class="pill" onclick="filterCategory('Classic')">Classic</button>
+      <button class="pill" onclick="filterCategory('Kids')">Kids</button>
+      <button class="pill" onclick="filterCategory('Sci-Fi')">Sci-Fi</button>
+      <button class="pill" onclick="filterCategory('Mystery & Thriller')">Mystery & Thriller</button>
+    </div>
+  </div>
+
+  <!-- Continue Reading Shelf -->
+  <section class="content-section">
+    <h2 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Continue Reading</h2>
+    <div class="row-container" id="continueReadingRow">
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Connecting to Realtime Database...</p>
+    </div>
+  </section>
+
+  <!-- Categorized Book Shelves Container -->
+  <div id="dynamicShelvesContainer"></div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <div class="bottom-nav">
+    <div class="bottom-nav-item active" id="bnav-home" onclick="handleBottomNav('home')">
+      <i class="fa-solid fa-house"></i>
+      <span>Home</span>
+    </div>
+    <div class="bottom-nav-item" id="bnav-search" onclick="handleBottomNav('search')">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <span>Search</span>
+    </div>
+    <div class="bottom-nav-item" id="bnav-audio" onclick="handleBottomNav('audio')">
+      <i class="fa-solid fa-headphones"></i>
+      <span>Audio</span>
+    </div>
+    <div class="bottom-nav-item" id="bnav-library" onclick="handleBottomNav('library')">
+      <i class="fa-solid fa-bookmark"></i>
+      <span>Library</span>
+    </div>
+  </div>
+
+  <!-- Mobile Fullscreen Search Overlay -->
+  <div class="nav-overlay-modal" id="mobileSearchModal">
+    <div class="nav-overlay-header">
+      <h3><i class="fa-solid fa-magnifying-glass"></i> Quick Search</h3>
+      <span class="close-btn" onclick="closeBottomNavModal('mobileSearchModal')"><i class="fa-solid fa-xmark"></i></span>
+    </div>
+    <div class="search-input-wrapper" style="max-width: 100%; margin-bottom: 20px;">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="mobileSearchInput" placeholder="Search books, authors, categories..." oninput="handleMobileSearch()">
+    </div>
+    <div class="row-container" id="mobileSearchResults" style="flex-wrap: wrap; gap: 12px;"></div>
+  </div>
+
+  <!-- Mobile My Library / Bookmarks Overlay -->
+  <div class="nav-overlay-modal" id="mobileLibraryModal">
+    <div class="nav-overlay-header">
+      <h3><i class="fa-solid fa-bookmark"></i> My Library & Bookmarks</h3>
+      <span class="close-btn" onclick="closeBottomNavModal('mobileLibraryModal')"><i class="fa-solid fa-xmark"></i></span>
+    </div>
+    <div class="row-container" id="mobileLibraryContainer" style="flex-wrap: wrap; gap: 12px;">
+      <p style="color: var(--text-muted);">Loading your library...</p>
+    </div>
+  </div>
+
+  <!-- Firebase Script & App Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsqjpe8t5O6e8jVDlEcqz-fZ_qB-F8_G4",
+      authDomain: "av-books-239fe.firebaseapp.com",
+      databaseURL: "https://av-books-239fe-default-rtdb.firebaseio.com",
+      projectId: "av-books-239fe",
+      storageBucket: "av-books-239fe.firebasestorage.app",
+      messagingSenderId: "144002632850",
+      appId: "1:144002632850:web:927a1da74c9db4d7a72a4b",
+      measurementId: "G-5T1KEEWTY5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const rtdb = getDatabase(app);
+
+    const localUser = JSON.parse(localStorage.getItem('readverse_active_user') || '{"uid":"GUESTUSER101","name":"Guest","email":"guest@readverse.com"}');
+    
+    const displayName = localUser.name || localUser.email || 'G';
+    document.getElementById('userAvatar').innerText = displayName.charAt(0).toUpperCase();
+
+    let bookCatalog = [];
+    let selectedCategory = 'All';
+    let searchQuery = '';
+
+    // Centralized Category Configuration Map
+    const CATEGORY_CONFIG = {
+      "Originals": { icon: "fa-solid fa-award" },
+      "Horror": { icon: "fa-solid fa-ghost" },
+      "Top Recommended": { icon: "fa-solid fa-thumbs-up" },
+      "Trending": { icon: "fa-solid fa-fire" },
+      "New Publish": { icon: "fa-solid fa-bolt" },
+      "Romantic": { icon: "fa-solid fa-heart" },
+      "For Students": { icon: "fa-solid fa-graduation-cap" },
+      "Classic": { icon: "fa-solid fa-book-journal-whills" },
+      "Kids": { icon: "fa-solid fa-child" },
+      "Sci-Fi": { icon: "fa-solid fa-rocket" },
+      "Mystery & Thriller": { icon: "fa-solid fa-user-ninja" }
+    };
+
+    // Reader URL Redirect Function
+    window.navigateToReader = function(id, type = 'text') {
+      window.location.href = `read.html?id=${id}&type=${type}`;
+    };
+
+    // Render Badge HTML for Card
+    function renderCardBadge(book) {
+      const badgeType = book.badge || book.category || "";
+      const lowerBadge = badgeType.toString().toLowerCase();
+
+      if (lowerBadge.includes('new')) {
+        return `<span class="card-badge badge-new"><i class="fa-solid fa-bolt"></i> NEW</span>`;
+      } else if (lowerBadge.includes('trending')) {
+        return `<span class="card-badge badge-trending"><i class="fa-solid fa-fire"></i> TRENDING</span>`;
+      } else if (lowerBadge.includes('premium') || lowerBadge.includes('original')) {
+        return `<span class="card-badge badge-premium"><i class="fa-solid fa-crown"></i> PREMIUM</span>`;
+      } else if (lowerBadge.includes('audio') || book.hasAudio) {
+        return `<span class="card-badge badge-audio"><i class="fa-solid fa-headphones"></i> AUDIO</span>`;
+      } else if (book.rating) {
+        return `<span class="card-badge badge-rating"><i class="fa-solid fa-star"></i> ${book.rating}</span>`;
+      }
+      return '';
+    }
+
+    // Load books from Realtime Database 'books/' node
+    function loadBooksFromFirebase() {
+      const booksRef = ref(rtdb, 'books');
+      onValue(booksRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          bookCatalog = Array.isArray(data) ? data : Object.values(data);
+          renderShelves();
+        }
+      });
+    }
+
+    // Dynamic Category Shelf Renderer (Only uses book.category, ignores genre)
+    function renderShelves() {
+      const container = document.getElementById('dynamicShelvesContainer');
+      container.innerHTML = '';
+
+      if (!bookCatalog || bookCatalog.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">Loading books database...</div>`;
+        return;
+      }
+
+      // Extract and split ONLY book.category (ignoring genre)
+      const rawCategories = bookCatalog.flatMap(b => {
+        if (b.category) return b.category.split(',');
+        return [];
+      })
+      .map(c => c.trim())
+      .filter(Boolean);
+
+      // Filter to unique categories preserving database appearance order
+      const uniqueCategories = [];
+      rawCategories.forEach(cat => {
+        if (!uniqueCategories.some(c => c.toLowerCase() === cat.toLowerCase())) {
+          uniqueCategories.push(cat);
+        }
+      });
+
+      uniqueCategories.forEach(cat => {
+        if (selectedCategory !== 'All' && selectedCategory.toLowerCase() !== cat.toLowerCase()) return;
+
+        // Filter books matching category after splitting by comma
+        const filteredBooks = bookCatalog.filter(book => {
+          const bookCategories = (book.category ? book.category.split(',') : []).map(c => c.trim().toLowerCase());
+
+          const matchCat = bookCategories.includes(cat.toLowerCase());
+
+          const matchSearch = book.title.toLowerCase().includes(searchQuery) ||
+                              book.author.toLowerCase().includes(searchQuery) ||
+                              bookCategories.some(c => c.includes(searchQuery));
+
+          return matchCat && matchSearch;
+        });
+
+        if (filteredBooks.length === 0) return;
+
+        const catConfig = CATEGORY_CONFIG[cat] || { icon: "fa-solid fa-layer-group" };
+
+        let shelfHtml = `
+          <section class="content-section" id="cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, '')}">
+            <h2 class="section-title"><i class="${catConfig.icon}"></i> ${cat}</h2>
+            <div class="row-container">
+        `;
+
+        filteredBooks.forEach(book => {
+          const badgeHtml = renderCardBadge(book);
+          const contentType = book.type || (book.hasAudio ? 'audio' : 'text');
+
+          shelfHtml += `
+            <div class="card" onclick="navigateToReader('${book.id}', '${contentType}')">
+              ${badgeHtml}
+              <img src="${book.img || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80'}" alt="${book.title}">
+              <div class="card-overlay">
+                <h4>${book.title}</h4>
+                <p>${book.author}</p>
+              </div>
+            </div>
+          `;
+        });
+
+        shelfHtml += `
+            </div>
+          </section>
+        `;
+
+        container.innerHTML += shelfHtml;
+      });
+
+      if (container.innerHTML === '') {
+        container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">No books found matching "${searchQuery}".</div>`;
+      }
+    }
+
+    // Category Pill Click Handler
+    window.filterCategory = function(cat) {
+      selectedCategory = cat;
+      
+      const pills = document.querySelectorAll('.pill');
+      pills.forEach(p => {
+        if (p.innerText.trim().toLowerCase() === cat.toLowerCase()) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+
+      renderShelves();
+    };
+
+    window.handleSearch = function() {
+      searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+      renderShelves();
+    };
+
+    // Bottom Navigation Handlers
+    function setActiveNavTab(tabId) {
+      document.querySelectorAll('.bottom-nav-item').forEach(item => item.classList.remove('active'));
+      const activeBtn = document.getElementById(`bnav-${tabId}`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    window.handleBottomNav = function(action) {
+      closeBottomNavModal('mobileSearchModal');
+      closeBottomNavModal('mobileLibraryModal');
+
+      switch (action) {
+        case 'home':
+          setActiveNavTab('home');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          filterCategory('All');
+          break;
+
+        case 'search':
+          setActiveNavTab('search');
+          document.getElementById('mobileSearchModal').classList.add('active');
+          document.getElementById('mobileSearchInput').focus();
+          handleMobileSearch();
+          break;
+
+        case 'audio':
+          setActiveNavTab('audio');
+          const searchSec = document.querySelector('.search-section');
+          if (searchSec) searchSec.scrollIntoView({ behavior: 'smooth' });
+          filterCategory('Audio');
+          break;
+
+        case 'library':
+          setActiveNavTab('library');
+          document.getElementById('mobileLibraryModal').classList.add('active');
+          loadUserBookmarks();
+          break;
+      }
+    };
+
+    window.closeBottomNavModal = function(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    };
+
+    window.handleMobileSearch = function() {
+      const query = document.getElementById('mobileSearchInput').value.trim().toLowerCase();
+      const resultsContainer = document.getElementById('mobileSearchResults');
+      
+      if (!bookCatalog || bookCatalog.length === 0) {
+        resultsContainer.innerHTML = `<p style="color: var(--text-muted);">Loading database...</p>`;
+        return;
+      }
+
+      const matches = bookCatalog.filter(book => {
+        const bookCategories = (book.category ? book.category.split(',') : []).map(c => c.trim().toLowerCase());
+
+        return book.title.toLowerCase().includes(query) ||
+               book.author.toLowerCase().includes(query) ||
+               bookCategories.some(c => c.includes(query));
+      });
+
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<p style="color: var(--text-muted);">No books found matching "${query}"</p>`;
+        return;
+      }
+
+      let html = '';
+      matches.forEach(book => {
+        const badgeHtml = renderCardBadge(book);
+        const contentType = book.type || (book.hasAudio ? 'audio' : 'text');
+
+        html += `
+          <div class="card" style="flex: 0 0 130px; height: 200px;" onclick="closeBottomNavModal('mobileSearchModal'); navigateToReader('${book.id}', '${contentType}')">
+            ${badgeHtml}
+            <img src="${book.img || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80'}" alt="${book.title}">
+            <div class="card-overlay">
+              <h4>${book.title}</h4>
+              <p>${book.author}</p>
+            </div>
+          </div>
+        `;
+      });
+
+      resultsContainer.innerHTML = html;
+    };
+
+    function loadUserBookmarks() {
+      const bookmarksRef = ref(rtdb, `users/${localUser.uid}/bookmarks`);
+      const container = document.getElementById('mobileLibraryContainer');
+
+      onValue(bookmarksRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+          container.innerHTML = `<p style="color: var(--text-muted);">No bookmarked items yet. Tap "Bookmark" on any book to add it here!</p>`;
+          return;
+        }
+
+        let html = '';
+        Object.keys(data).forEach(id => {
+          const item = data[id];
+          const matchedBook = bookCatalog.find(b => b.id == id) || item;
+          const badgeHtml = renderCardBadge(matchedBook);
+          const contentType = matchedBook.type || (matchedBook.hasAudio ? 'audio' : 'text');
+
+          html += `
+            <div class="card" style="flex: 0 0 130px; height: 200px;" onclick="closeBottomNavModal('mobileLibraryModal'); navigateToReader('${id}', '${contentType}')">
+              ${badgeHtml}
+              <img src="${matchedBook.img || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80'}" alt="${matchedBook.title}">
+              <div class="card-overlay">
+                <h4>${matchedBook.title || 'Saved Book'}</h4>
+                <p>Saved in Library</p>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      });
+    }
+
+    // Listen to user reading progress live from Firebase Realtime Database
+    function listenToUserProgress() {
+      const userProgressRef = ref(rtdb, `users/${localUser.uid}/progress`);
+
+      onValue(userProgressRef, (snapshot) => {
+        const container = document.getElementById('continueReadingRow');
+        const data = snapshot.val();
+
+        if (!data) {
+          container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">No active books. Tap any title below to start reading.</p>`;
+          return;
+        }
+
+        let html = '';
+        Object.keys(data).forEach((bookId) => {
+          const item = data[bookId];
+          const percent = Math.round((item.currentPage / item.totalPages) * 100);
+          const badgeHtml = renderCardBadge(item);
+          const contentType = item.type || 'text';
+
+          html += `
+            <div class="card" onclick="navigateToReader('${bookId}', '${contentType}')">
+              ${badgeHtml}
+              <img src="${item.img || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80'}" alt="${item.title}">
+              <div class="card-overlay">
+                <h4>${item.title}</h4>
+                <p>Page ${item.currentPage} of ${item.totalPages}</p>
+                <div class="progress-bar"><div class="progress" style="width: ${percent}%;"></div></div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      });
+    }
+
+    loadBooksFromFirebase();
+    listenToUserProgress();
+
+    window.toggleBookmark = async function(id, title, img) {
+      const bookmarkRef = ref(rtdb, `users/${localUser.uid}/bookmarks/${id}`);
+      await set(bookmarkRef, {
+        title: title,
+        img: img,
+        savedAt: Date.now()
+      });
+      alert(`"${title}" saved to your bookmarks!`);
+    };
+  </script>
+
+  <script>
+    window.addEventListener('scroll', () => {
+      const navbar = document.getElementById('navbar');
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+  </script>
+</body>
+</html>
