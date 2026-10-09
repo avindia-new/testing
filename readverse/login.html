@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadVerse - Login / Sign Up</title>
+
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-color: #0a0a0c;
+      --card-bg: #141419;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #22222a;
+      --error-color: #ef4444;
+      --success-color: #22c55e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; position: relative; overflow-x: hidden; }
+
+    body::before {
+      content: ''; position: absolute; width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, rgba(10, 10, 12, 0) 70%);
+      top: 15%; left: 50%; transform: translateX(-50%); z-index: 0; pointer-events: none;
+    }
+
+    .auth-container { width: 100%; max-width: 420px; background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 36px 28px; z-index: 1; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
+    .logo { font-size: 1.6rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 0.5px; margin-bottom: 24px; text-decoration: none; }
+
+    .auth-header { text-align: center; margin-bottom: 28px; }
+    .auth-header h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+    .auth-header p { color: var(--text-muted); font-size: 0.88rem; }
+
+    .tab-switch { display: flex; background: #0d0d11; border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-bottom: 24px; }
+    .tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); padding: 10px; font-size: 0.88rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
+    .tab-btn.active { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-wrapper i { position: absolute; left: 14px; color: var(--text-muted); font-size: 1rem; }
+    .input-wrapper input { width: 100%; background-color: #0d0d11; border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px 12px 42px; color: var(--text-main); font-size: 0.95rem; outline: none; transition: border-color 0.2s ease; }
+    .input-wrapper input:focus { border-color: var(--accent); }
+
+    .btn { width: 100%; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s ease; margin-top: 10px; }
+    .btn-primary { background-color: var(--accent); color: #fff; }
+    .btn-primary:hover { background-color: var(--accent-hover); }
+
+    .message-box { font-size: 0.85rem; padding: 10px 12px; border-radius: 6px; margin-bottom: 16px; display: none; }
+    .message-box.error { display: block; background-color: rgba(239, 68, 68, 0.1); border: 1px solid var(--error-color); color: var(--error-color); }
+    .message-box.success { display: block; background-color: rgba(34, 197, 94, 0.1); border: 1px solid var(--success-color); color: var(--success-color); }
+
+    .back-home { margin-top: 24px; text-align: center; }
+    .back-home a { color: var(--text-muted); font-size: 0.85rem; text-decoration: none; transition: color 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+    .back-home a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="auth-container">
+    <a href="index.html" class="logo">
+      <i class="fa-solid fa-book-open-reader"></i> READVERSE
+    </a>
+
+    <div class="auth-header">
+      <h2 id="authTitle">Welcome Back</h2>
+      <p id="authSubtitle">Sign in with your Email & Password</p>
+    </div>
+
+    <div class="tab-switch">
+      <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" id="signupTab" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <div class="message-box" id="messageBox"></div>
+
+    <form id="authForm">
+      <!-- Name Field (Only visible during Sign Up) -->
+      <div class="form-group" id="nameGroup" style="display: none;">
+        <label for="fullName">Full Name</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" id="fullName" placeholder="Jane Doe">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-envelope"></i>
+          <input type="email" id="email" placeholder="name@example.com" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" id="password" placeholder="••••••••" required minlength="6">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">
+        <i class="fa-solid fa-right-to-bracket"></i> <span id="submitBtnText">Sign In</span>
+      </button>
+    </form>
+
+    <div class="back-home">
+      <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Return to Main Reader</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsqjpe8t5O6e8jVDlEcqz-fZ_qB-F8_G4",
+      authDomain: "av-books-239fe.firebaseapp.com",
+      databaseURL: "https://av-books-239fe-default-rtdb.firebaseio.com",
+      projectId: "av-books-239fe",
+      storageBucket: "av-books-239fe.firebasestorage.app",
+      messagingSenderId: "144002632850",
+      appId: "1:144002632850:web:927a1da74c9db4d7a72a4b",
+      measurementId: "G-5T1KEEWTY5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const rtdb = getDatabase(app);
+
+    let currentMode = 'login';
+
+    function generateCapitalUID(length = 12) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    async function hashPassword(password) {
+      const msgUint8 = new TextEncoder().encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    window.switchTab = function(mode) {
+      currentMode = mode;
+      document.getElementById('messageBox').style.display = 'none';
+
+      const nameGroup = document.getElementById('nameGroup');
+      const fullNameInput = document.getElementById('fullName');
+
+      if (mode === 'login') {
+        document.getElementById('loginTab').classList.add('active');
+        document.getElementById('signupTab').classList.remove('active');
+        document.getElementById('authTitle').innerText = 'Welcome Back';
+        document.getElementById('submitBtnText').innerText = 'Sign In';
+        nameGroup.style.display = 'none';
+        fullNameInput.removeAttribute('required');
+      } else {
+        document.getElementById('signupTab').classList.add('active');
+        document.getElementById('loginTab').classList.remove('active');
+        document.getElementById('authTitle').innerText = 'Create Account';
+        document.getElementById('submitBtnText').innerText = 'Sign Up';
+        nameGroup.style.display = 'block';
+        fullNameInput.setAttribute('required', 'true');
+      }
+    };
+
+    function showMessage(msg, type = 'error') {
+      const box = document.getElementById('messageBox');
+      box.innerText = msg;
+      box.className = `message-box ${type}`;
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const rawPassword = document.getElementById('password').value;
+      const fullName = document.getElementById('fullName').value.trim();
+      const passwordHash = await hashPassword(rawPassword);
+
+      if (currentMode === 'signup') {
+        const accountsRef = ref(rtdb, 'accounts');
+        const emailQuery = query(accountsRef, orderByChild('email'), equalTo(email));
+        const snapshot = await get(emailQuery);
+
+        if (snapshot.exists()) {
+          showMessage('An account with this email already exists.', 'error');
+          return;
+        }
+
+        let generatedUID = generateCapitalUID(12);
+
+        let uidSnapshot = await get(ref(rtdb, `accounts/${generatedUID}`));
+        while (uidSnapshot.exists()) {
+          generatedUID = generateCapitalUID(12);
+          uidSnapshot = await get(ref(rtdb, `accounts/${generatedUID}`));
+        }
+
+        const userRef = ref(rtdb, `accounts/${generatedUID}`);
+        await set(userRef, {
+          uid: generatedUID,
+          name: fullName,
+          email: email,
+          passwordHash: passwordHash,
+          createdAt: Date.now()
+        });
+
+        localStorage.setItem('readverse_active_user', JSON.stringify({ uid: generatedUID, name: fullName, email: email }));
+        showMessage(`Welcome ${fullName}! Account created.`, 'success');
+        setTimeout(() => window.location.href = 'index.html', 1200);
+
+      } else {
+        const accountsRef = ref(rtdb, 'accounts');
+        const emailQuery = query(accountsRef, orderByChild('email'), equalTo(email));
+        const snapshot = await get(emailQuery);
+
+        if (!snapshot.exists()) {
+          showMessage('No account found with this email.', 'error');
+          return;
+        }
+
+        let matchedUser = null;
+        snapshot.forEach((childSnap) => {
+          matchedUser = childSnap.val();
+        });
+
+        if (matchedUser.passwordHash !== passwordHash) {
+          showMessage('Incorrect password.', 'error');
+          return;
+        }
+
+        localStorage.setItem('readverse_active_user', JSON.stringify({ uid: matchedUser.uid, name: matchedUser.name || 'User', email: matchedUser.email }));
+        showMessage('Login successful! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'index.html', 1000);
+      }
+    });
+  </script>
+</body>
+</html>
