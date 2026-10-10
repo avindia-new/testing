@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadVerse - OTT Image Reader View</title>
+  
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-color: #0b0b0e;
+      --card-bg: #141419;
+      --accent: #f97316;
+      --text-main: #ffffff;
+      --text-muted: #9e9ea7;
+      --border: #22222a;
+      --cta-btn-bg: #e2e8f0;
+      --cta-btn-text: #0b0b0e;
+      --star-active: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; overflow-x: hidden; padding-bottom: 70px; }
+
+    /* Top Video / Media Banner Container */
+    .trailer-hero {
+      position: relative;
+      width: 100%;
+      height: 42vh;
+      min-height: 280px;
+      background: #000 center/cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+    .trailer-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(180deg, rgba(11,11,14,0.6) 0%, transparent 40%, rgba(11,11,14,1) 100%);
+      pointer-events: none;
+    }
+
+    /* Top Control Icons */
+    .hero-top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hero-tag { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+    .close-icon-btn {
+      color: var(--text-main);
+      font-size: 1.4rem;
+      text-decoration: none;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+      background: none;
+      border: none;
+    }
+    .close-icon-btn:hover { opacity: 1; }
+
+    .hero-bottom-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .audio-mute-btn {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    /* OTT Content Details Body */
+    .details-body {
+      padding: 0 5% 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Title Styling */
+    .title-banner {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      background: linear-gradient(180deg, #ffd700 0%, #cca010 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 4px 15px rgba(0,0,0,0.8);
+    }
+
+    /* Metadata Row */
+    .meta-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .badge-rating {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: var(--star-active);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Large Main Read Now CTA Button */
+    .btn-watch-main {
+      width: 100%;
+      max-width: 600px;
+      background-color: var(--cta-btn-bg);
+      color: var(--cta-btn-text);
+      border: none;
+      padding: 14px 0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .btn-watch-main:hover {
+      background-color: #ffffff;
+      transform: scale(1.01);
+    }
+
+    /* Genres Pipe-Separated Bar */
+    .genre-bar {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .genre-bar span { color: var(--text-muted); font-weight: 300; }
+
+    /* Book Description Synopsis */
+    .synopsis {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 650px;
+      margin-bottom: 28px;
+    }
+
+    /* Four-Column OTT Action Toolbar */
+    .ott-action-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 35px;
+      padding: 0 10px;
+    }
+    .action-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: transform 0.2s;
+    }
+    .action-item i { font-size: 1.2rem; }
+    .action-item:hover i { color: var(--accent); }
+
+    /* Interactive Rating Modal */
+    .rating-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10, 10, 12, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    .rating-modal.active { display: flex; }
+    .rating-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      position: relative;
+    }
+    .stars-input {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stars-input i {
+      font-size: 2rem;
+      color: #33333f;
+      cursor: pointer;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .stars-input i:hover, .stars-input i.active {
+      color: var(--star-active);
+      transform: scale(1.15);
+    }
+    .rating-submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    /* "More Like This" Section */
+    .more-section { width: 100%; text-align: left; padding: 0 2%; margin-top: 10px; }
+    .more-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
+    
+    .row-container {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding-bottom: 12px;
+    }
+    .row-container::-webkit-scrollbar { height: 0px; }
+
+    /* "More Like This" Card with Overlay Badges */
+    .card {
+      flex: 0 0 135px;
+      height: 200px;
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+    .card img { width: 100%; height: 100%; object-fit: cover; }
+
+    .card-badge-top {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: var(--star-active);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      backdrop-filter: blur(4px);
+    }
+
+    .card-badge-bottom {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(11, 11, 14, 0.85);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Reader Interface Modal */
+    .reader-content-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #000000;
+      z-index: 1000;
+      flex-direction: column;
+    }
+    .reader-content-modal.active { display: flex; }
+    
+    .reader-topbar {
+      background: rgba(17, 17, 21, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 15px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .reader-top-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .fullscreen-toggle-btn {
+      color: var(--text-main);
+      font-size: 1.1rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s, color 0.2s;
+    }
+    .fullscreen-toggle-btn:hover { opacity: 1; color: var(--accent); }
+    
+    .book-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 2D Sliding Page Container with Zoom Control */
+    .book-image-page {
+      width: 100%;
+      max-width: 650px;
+      height: 75vh;
+      background: #000000;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px;
+      touch-action: pan-x pan-y pinch-zoom;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+    }
+
+    /* 2D Horizontal Slide Transitions */
+    .book-image-page.slide-next {
+      transform: translateX(-100px);
+      opacity: 0;
+    }
+    .book-image-page.slide-prev {
+      transform: translateX(100px);
+      opacity: 0;
+    }
+
+    .book-image-page img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .page-footer-nav {
+      background: rgba(17, 17, 21, 0.95);
+      border-top: 1px solid var(--border);
+      padding: 15px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .page-nav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .page-nav-btn:hover:not(:disabled) {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .page-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .page-indicator {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Full-Screen Immersive Overrides */
+    .reader-content-modal.is-fullscreen .reader-topbar,
+    .reader-content-modal.is-fullscreen .page-footer-nav {
+      opacity: 0;
+      visibility: hidden;
+      position: absolute;
+      left: 0; width: 100%;
+    }
+
+    .reader-content-modal.is-fullscreen .reader-topbar { top: 0; }
+    .reader-content-modal.is-fullscreen .page-footer-nav { bottom: 0; }
+
+    .reader-content-modal.is-fullscreen.show-controls .reader-topbar,
+    .reader-content-modal.is-fullscreen.show-controls .page-footer-nav {
+      opacity: 1;
+      visibility: visible;
+      background: rgba(11, 11, 14, 0.9);
+      backdrop-filter: blur(10px);
+    }
+
+    .reader-content-modal.is-fullscreen .book-image-page {
+      max-width: 100vw;
+      height: 98vh;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+    }
+
+    .fullscreen-exit-floater {
+      display: none;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 20;
+      backdrop-filter: blur(8px);
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.3s ease;
+    }
+    .reader-content-modal.is-fullscreen.show-controls .fullscreen-exit-floater {
+      display: flex;
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; width: 100%;
+      height: 60px;
+      background-color: #0d0d11;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-decoration: none;
+    }
+    .bottom-nav-item.active { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- Trailer/Media Backdrop Top Container -->
+  <section class="trailer-hero" id="heroBanner">
+    <div class="trailer-overlay"></div>
+    <div class="hero-top-bar">
+      <span class="hero-tag">PREVIEW</span>
+      <a href="index.html" class="close-icon-btn"><i class="fa-solid fa-xmark"></i></a>
+    </div>
+    <div class="hero-bottom-bar">
+      <button class="audio-mute-btn" onclick="toggleMute()"><i class="fa-solid fa-volume-xmark" id="muteIcon"></i></button>
+    </div>
+  </section>
+
+  <!-- OTT Book Detail Container -->
+  <main class="details-body">
+    <h1 class="title-banner" id="bookTitle">LOADING...</h1>
+    
+    <div class="meta-line" id="bookMetaLine">
+      <span id="bookYear">2026</span> • 
+      <span class="badge-rating" id="bookRatingBadge"><i class="fa-solid fa-star"></i> 4.8</span> • 
+      <span id="bookLength">11 Pages</span> • 
+      <span id="bookLang">Hindi</span>
+    </div>
+
+    <button class="btn-watch-main" onclick="startReading()">
+      <i class="fa-solid fa-book-open"></i> Read Now
+    </button>
+
+    <div class="genre-bar" id="genreBar">
+      Romance <span>|</span> Drama <span>|</span> Journey
+    </div>
+
+    <p class="synopsis" id="bookSynopsis">Loading synopsis...</p>
+
+    <div class="ott-action-grid">
+      <button class="action-item" onclick="toggleWatchlist()"><i class="fa-solid fa-plus"></i><span>Library</span></button>
+      <button class="action-item" onclick="shareBook()"><i class="fa-solid fa-share-nodes"></i><span>Share</span></button>
+      <button class="action-item" onclick="downloadBook()"><i class="fa-solid fa-arrow-down"></i><span>Download</span></button>
+      <button class="action-item" onclick="openRatingModal()"><i class="fa-regular fa-star" id="rateBtnIcon"></i><span id="rateBtnLabel">Rate</span></button>
+    </div>
+
+    <!-- Dynamic "More Like This" Recommendations Shelf -->
+    <section class="more-section">
+      <h2 class="more-title">More Like This</h2>
+      <div class="row-container" id="moreLikeThisRow">
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Loading recommended titles...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Rating Modal -->
+  <div class="rating-modal" id="ratingModal">
+    <div class="rating-card">
+      <button class="close-icon-btn" style="position: absolute; top: 12px; right: 12px;" onclick="closeRatingModal()"><i class="fa-solid fa-xmark"></i></button>
+      <h3>Rate Title</h3>
+      <p>How would you rate this book?</p>
+      <div class="stars-input" id="starsContainer">
+        <i class="fa-solid fa-star" data-value="1"></i>
+        <i class="fa-solid fa-star" data-value="2"></i>
+        <i class="fa-solid fa-star" data-value="3"></i>
+        <i class="fa-solid fa-star" data-value="4"></i>
+        <i class="fa-solid fa-star" data-value="5"></i>
+      </div>
+      <button class="rating-submit-btn" onclick="submitRating()">Submit Rating</button>
+    </div>
+  </div>
+
+  <!-- Image Reader Modal -->
+  <div class="reader-content-modal" id="readerModal">
+    <div class="reader-topbar">
+      <h3 id="modalTopTitle" style="color: var(--accent); font-size: 1.1rem;"><i class="fa-solid fa-book-open-reader"></i> ReadVerse Viewer</h3>
+      <div class="reader-top-actions">
+        <button class="fullscreen-toggle-btn" id="fullScreenBtn" onclick="toggleFullScreen()" title="Full Screen"><i class="fa-solid fa-expand" id="fullScreenIcon"></i></button>
+        <button class="close-icon-btn" onclick="closeReader()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    
+    <div class="book-stage" id="bookStage">
+      <button class="fullscreen-exit-floater" id="exitFloaterBtn" onclick="toggleFullScreen()"><i class="fa-solid fa-compress"></i> Exit Full Screen</button>
+
+      <div class="book-image-page" id="bookImagePageCard">
+        <img id="activePageImg" src="" alt="Book Page">
+      </div>
+    </div>
+
+    <div class="page-footer-nav">
+      <button class="page-nav-btn" id="prevPageBtn" onclick="changePage(-1)"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+      <span class="page-indicator" id="pageIndicator">Page 1 of 11</span>
+      <button class="page-nav-btn" id="nextPageBtn" onclick="changePage(1)">Next <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <!--  <div class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item active"><i class="fa-solid fa-house"></i><span>Home</span></a>
+    <a href="index.html" class="bottom-nav-item"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></a>
+    <a href="index.html" class="bottom-nav-item"><i class="fa-solid fa-user"></i><span>My Space</span></a>
+  </div>-->
+
+  <!-- Firebase Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsqjpe8t5O6e8jVDlEcqz-fZ_qB-F8_G4",
+      authDomain: "av-books-239fe.firebaseapp.com",
+      databaseURL: "https://av-books-239fe-default-rtdb.firebaseio.com",
+      projectId: "av-books-239fe",
+      storageBucket: "av-books-239fe.firebasestorage.app",
+      messagingSenderId: "144002632850",
+      appId: "1:144002632850:web:927a1da74c9db4d7a72a4b",
+      measurementId: "G-5T1KEEWTY5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const rtdb = getDatabase(app);
+    const localUser = JSON.parse(localStorage.getItem('readverse_active_user') || '{"uid":"GUESTUSER101","name":"Guest"}');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookId = urlParams.get('id') || '1';
+
+    let currentBook = null;
+    let selectedRatingValue = 0;
+    let totalPagesCount = 11;
+    let currentPageIndex = 0;
+    let controlsTimeout = null;
+
+    async function loadBookData() {
+      try {
+        const snapshot = await get(ref(rtdb, `books/${bookId}`));
+        if (snapshot.exists()) {
+          currentBook = snapshot.val();
+        } else {
+          currentBook = {
+            id: '1',
+            title: 'Ek Safar',
+            author: 'AV India',
+            year: '2026',
+            pages: 11,
+            lang: 'Hindi',
+            category: 'Romance, Drama, Journey',
+            img: 'https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/ek%20Safar/0.jpg',
+            imageBaseUrl: 'https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/ek%20Safar/',
+            imageExtension: '.jpg',
+            description: 'Ek Safar - A heartfelt story following a memorable journey filled with emotions, discoveries, and life lessons.'
+          };
+        }
+
+        totalPagesCount = currentBook.pages || 11;
+        renderDetails(currentBook);
+        listenToRatings();
+        checkUserExistingRating();
+        loadMoreLikeThis();
+      } catch (err) {
+        console.error("Error fetching book data:", err);
+      }
+    }
+
+    function renderDetails(book) {
+      document.getElementById('bookTitle').innerText = book.title;
+      document.getElementById('bookSynopsis').innerText = book.description || '';
+      document.getElementById('bookYear').innerText = book.year || '2026';
+      document.getElementById('bookLength').innerText = `${totalPagesCount} Pages`;
+      if (book.img) document.getElementById('heroBanner').style.backgroundImage = `url('${book.img}')`;
+    }
+
+    /**
+     * CONSOLIDATED 2D SLIDING PAGE RENDERING
+     */
+    window.renderPage = async function(index) {
+      if (index < 0 || index >= totalPagesCount) return;
+
+      const pageCard = document.getElementById('bookImagePageCard');
+      const slideDirection = index > currentPageIndex ? 'slide-next' : 'slide-prev';
+      
+      pageCard.classList.add(slideDirection);
+
+      setTimeout(async () => {
+        currentPageIndex = index;
+        const imgEl = document.getElementById('activePageImg');
+
+        if (Array.isArray(currentBook.imagePages)) {
+          imgEl.src = currentBook.imagePages[currentPageIndex];
+        } else {
+          const baseUrl = currentBook.imageBaseUrl || "https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/ek%20Safar/";
+          const ext = currentBook.imageExtension || ".jpg";
+          imgEl.src = `${baseUrl}${currentPageIndex}${ext}`;
+        }
+
+        document.getElementById('pageIndicator').innerText = `Page ${currentPageIndex + 1} of ${totalPagesCount}`;
+        document.getElementById('prevPageBtn').disabled = currentPageIndex === 0;
+        document.getElementById('nextPageBtn').disabled = currentPageIndex === totalPagesCount - 1;
+
+        pageCard.classList.remove('slide-next', 'slide-prev');
+
+        await update(ref(rtdb, `users/${localUser.uid}/progress/${bookId}`), {
+          currentPage: currentPageIndex + 1,
+          totalPages: totalPagesCount,
+          lastRead: Date.now()
+        });
+      }, 250);
+    };
+
+    window.changePage = function(direction) {
+      window.renderPage(currentPageIndex + direction);
+    };
+
+    /**
+     * FULL-SCREEN READING MODE CONTROLS
+     */
+    window.toggleFullScreen = function() {
+      const modalEl = document.getElementById('readerModal');
+      const icon = document.getElementById('fullScreenIcon');
+
+      if (!document.fullscreenElement) {
+        if (modalEl.requestFullscreen) modalEl.requestFullscreen();
+        else if (modalEl.webkitRequestFullscreen) modalEl.webkitRequestFullscreen();
+        
+        modalEl.classList.add('is-fullscreen');
+        icon.className = 'fa-solid fa-compress';
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        
+        modalEl.classList.remove('is-fullscreen', 'show-controls');
+        icon.className = 'fa-solid fa-expand';
+      }
+    };
+
+    const stageEl = document.getElementById('bookStage');
+    stageEl.addEventListener('click', () => {
+      const modalEl = document.getElementById('readerModal');
+      if (modalEl.classList.contains('is-fullscreen')) {
+        modalEl.classList.toggle('show-controls');
+        
+        clearTimeout(controlsTimeout);
+        if (modalEl.classList.contains('show-controls')) {
+          controlsTimeout = setTimeout(() => {
+            modalEl.classList.remove('show-controls');
+          }, 4000);
+        }
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      const modalEl = document.getElementById('readerModal');
+      const icon = document.getElementById('fullScreenIcon');
+      if (!document.fullscreenElement) {
+        modalEl.classList.remove('is-fullscreen', 'show-controls');
+        icon.className = 'fa-solid fa-expand';
+      }
+    });
+
+    /**
+     * DYNAMIC "MORE LIKE THIS" RECOMMENDATION SYSTEM WITH BADGES
+     */
+    async function loadMoreLikeThis() {
+      try {
+        const snapshot = await get(ref(rtdb, 'books'));
+        const row = document.getElementById('moreLikeThisRow');
+
+        if (snapshot.exists()) {
+          const allBooks = Object.values(snapshot.val());
+          const otherBooks = allBooks.filter(b => String(b.id) !== String(bookId));
+
+          if (otherBooks.length > 0) {
+            let html = '';
+            otherBooks.forEach(b => {
+              const coverImg = b.img || (b.imageBaseUrl ? `${b.imageBaseUrl}0${b.imageExtension || '.jpg'}` : 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c');
+              const ratingVal = b.rating || '4.8';
+              const pageBadgeText = b.pages ? `${b.pages}P` : 'Comic';
+
+              html += `
+                <div class="card" onclick="window.location.href='read.html?id=${b.id}'">
+                  <div class="card-badge-top"><i class="fa-solid fa-star"></i> ${ratingVal}</div>
+                  <img src="${coverImg}" alt="${b.title || 'Book Cover'}">
+                  <div class="card-badge-bottom">${pageBadgeText}</div>
+                </div>
+              `;
+            });
+            row.innerHTML = html;
+          } else {
+            row.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No other titles available yet.</p>';
+          }
+        } else {
+          row.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No recommendations found.</p>';
+        }
+      } catch (e) {
+        console.error("Error loading recommendations:", e);
+      }
+    }
+
+    /**
+     * TOUCH & SWIPE SUPPORT WITH PINCH-TO-ZOOM GUARD
+     */
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isMultiTouch = false;
+
+    stageEl.addEventListener('touchstart', (e) => {
+      // Guard against multi-touch (pinching/zooming with 2+ fingers)
+      if (e.touches.length > 1) {
+        isMultiTouch = true;
+        return;
+      }
+      isMultiTouch = false;
+
+      // Guard against magnified viewport scale
+      if (window.visualViewport && window.visualViewport.scale > 1.05) {
+        return;
+      }
+
+      touchStartX = e.touches[0].screenX;
+      touchStartY = e.touches[0].screenY;
+    }, { passive: true });
+
+    stageEl.addEventListener('touchend', (e) => {
+      // Ignore if multi-touch occurred during gesture
+      if (isMultiTouch) {
+        isMultiTouch = false;
+        return;
+      }
+
+      // Ignore page turns if zoomed in
+      if (window.visualViewport && window.visualViewport.scale > 1.05) {
+        return;
+      }
+
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+      const touchEndX = e.changedTouches[0].screenX;
+      const touchEndY = e.changedTouches[0].screenY;
+
+      const deltaX = touchStartX - touchEndX;
+      const deltaY = touchStartY - touchEndY;
+
+      // Swipe trigger: Must be predominantly horizontal and > 50px
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+          changePage(1);  // Swipe Left -> Next Page
+        } else {
+          changePage(-1); // Swipe Right -> Previous Page
+        }
+      }
+    }, { passive: true });
+
+    window.startReading = function() {
+      if (!currentBook) return;
+      document.getElementById('readerModal').classList.add('active');
+      window.renderPage(0);
+    };
+
+    window.closeReader = function() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      document.getElementById('readerModal').classList.remove('active');
+    };
+
+    function listenToRatings() {
+      onValue(ref(rtdb, `books/${bookId}/ratings`), async (snapshot) => {
+        const ratingsData = snapshot.val();
+        if (ratingsData) {
+          const values = Object.values(ratingsData).map(v => typeof v === 'number' ? v : (v.rating || 0));
+          const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+          document.getElementById('bookRatingBadge').innerHTML = `<i class="fa-solid fa-star"></i> ${avg} (${values.length})`;
+          await update(ref(rtdb, `books/${bookId}`), { rating: avg });
+        }
+      });
+    }
+
+    function checkUserExistingRating() {
+      onValue(ref(rtdb, `users/${localUser.uid}/ratings/${bookId}`), (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+          selectedRatingValue = typeof val === 'number' ? val : val.rating;
+          document.getElementById('rateBtnIcon').className = 'fa-solid fa-star';
+          document.getElementById('rateBtnIcon').style.color = 'var(--star-active)';
+          document.getElementById('rateBtnLabel').innerText = `Rated ${selectedRatingValue}★`;
+          highlightStars(selectedRatingValue);
+        }
+      });
+    }
+
+    const starElements = document.querySelectorAll('#starsContainer i');
+    starElements.forEach(star => {
+      star.addEventListener('click', (e) => {
+        selectedRatingValue = parseInt(e.target.getAttribute('data-value'));
+        highlightStars(selectedRatingValue);
+      });
+    });
+
+    function highlightStars(count) {
+      starElements.forEach(star => {
+        const val = parseInt(star.getAttribute('data-value'));
+        star.classList.toggle('active', val <= count);
+      });
+    }
+
+    window.openRatingModal = () => document.getElementById('ratingModal').classList.add('active');
+    window.closeRatingModal = () => document.getElementById('ratingModal').classList.remove('active');
+
+    window.submitRating = async function() {
+      if (selectedRatingValue === 0) return alert("Please select a star rating first.");
+      const timestamp = Date.now();
+      await Promise.all([
+        set(ref(rtdb, `books/${bookId}/ratings/${localUser.uid}`), { rating: selectedRatingValue, user: localUser.name || 'Guest', timestamp }),
+        set(ref(rtdb, `users/${localUser.uid}/ratings/${bookId}`), { bookId, rating: selectedRatingValue, timestamp })
+      ]);
+      closeRatingModal();
+      alert(`Rating of ${selectedRatingValue}★ submitted!`);
+    };
+
+    window.toggleWatchlist = async function() {
+      await set(ref(rtdb, `users/${localUser.uid}/bookmarks/${bookId}`), { title: currentBook.title, img: currentBook.img || '', savedAt: Date.now() });
+      alert(`"${currentBook.title}" added to your Library!`);
+    };
+
+    window.shareBook = function() {
+      if (navigator.share) navigator.share({ title: currentBook.title, url: window.location.href });
+      else { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }
+    };
+
+    window.downloadBook = () => alert('Downloading book images for offline mode...');
+    window.toggleMute = () => {
+      const icon = document.getElementById('muteIcon');
+      icon.className = icon.classList.contains('fa-volume-xmark') ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+    };
+
+    loadBookData();
+  </script>
+</body>
+</html>
