@@ -357,7 +357,7 @@
     }
 
     /* 2D Sliding Page Container with Zoom Control */
-    .book-image-page {
+      .book-image-page {
       width: 100%;
       max-width: 650px;
       height: 75vh;
@@ -370,8 +370,9 @@
       touch-action: pan-x pan-y pinch-zoom;
       user-select: none;
       -webkit-user-select: none;
-      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+      transition: transform 0.1s ease-out, opacity 0.1s ease-out; /* Accelerated speed */
     }
+
 
     /* 2D Horizontal Slide Transitions */
     .book-image-page.slide-next {
@@ -667,48 +668,54 @@
       document.getElementById('bookYear').innerText = book.year || '2026';
       document.getElementById('bookLength').innerText = `${totalPagesCount} Pages`;
       if (book.img) document.getElementById('heroBanner').style.backgroundImage = `url('${book.img}')`;
+      if (book.category) {
+        const genres = book.genre.split(',').map(g => g.trim());
+        document.getElementById('genreBar').innerHTML = genres.join(' <span>|</span> ');
+      } else {
+        document.getElementById('genreBar').innerHTML = 'General';
+      }
     }
 
     /**
      * CONSOLIDATED 2D SLIDING PAGE RENDERING
      */
+        /**
+     * ULTRA-FAST CONSOLIDATED PAGE RENDERING
+     */
     window.renderPage = async function(index) {
       if (index < 0 || index >= totalPagesCount) return;
 
       const pageCard = document.getElementById('bookImagePageCard');
-      const slideDirection = index > currentPageIndex ? 'slide-next' : 'slide-prev';
+      const imgEl = document.getElementById('activePageImg');
       
-      pageCard.classList.add(slideDirection);
+      // Update index and UI instantly with zero lag
+      currentPageIndex = index;
 
-      setTimeout(async () => {
-        currentPageIndex = index;
-        const imgEl = document.getElementById('activePageImg');
+      // Construct and assign image source immediately
+      if (Array.isArray(currentBook.imagePages)) {
+        imgEl.src = currentBook.imagePages[currentPageIndex];
+      } else {
+        const baseUrl = currentBook.imageBaseUrl || "https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/ek%20Safar/";
+        const ext = currentBook.imageExtension || ".jpg";
+        imgEl.src = `${baseUrl}${currentPageIndex}${ext}`;
+      }
 
-        if (Array.isArray(currentBook.imagePages)) {
-          imgEl.src = currentBook.imagePages[currentPageIndex];
-        } else {
-          const baseUrl = currentBook.imageBaseUrl || "https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/ek%20Safar/";
-          const ext = currentBook.imageExtension || ".jpg";
-          imgEl.src = `${baseUrl}${currentPageIndex}${ext}`;
-        }
+      document.getElementById('pageIndicator').innerText = `Page ${currentPageIndex + 1} of ${totalPagesCount}`;
+      document.getElementById('prevPageBtn').disabled = currentPageIndex === 0;
+      document.getElementById('nextPageBtn').disabled = currentPageIndex === totalPagesCount - 1;
 
-        document.getElementById('pageIndicator').innerText = `Page ${currentPageIndex + 1} of ${totalPagesCount}`;
-        document.getElementById('prevPageBtn').disabled = currentPageIndex === 0;
-        document.getElementById('nextPageBtn').disabled = currentPageIndex === totalPagesCount - 1;
-
-        pageCard.classList.remove('slide-next', 'slide-prev');
-
-        await update(ref(rtdb, `users/${localUser.uid}/progress/${bookId}`), {
-          currentPage: currentPageIndex + 1,
-          totalPages: totalPagesCount,
-          lastRead: Date.now()
-        });
-      }, 250);
+      // Background sync to Firebase (non-blocking)
+      update(ref(rtdb, `users/${localUser.uid}/progress/${bookId}`), {
+        currentPage: currentPageIndex + 1,
+        totalPages: totalPagesCount,
+        lastRead: Date.now()
+      }).catch(err => console.error("Progress sync error:", err));
     };
 
     window.changePage = function(direction) {
       window.renderPage(currentPageIndex + direction);
     };
+
 
     /**
      * FULL-SCREEN READING MODE CONTROLS
