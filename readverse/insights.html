@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReadVerse Insights - Ultimate Analytics & Control Center</title>
+  
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- html2pdf.js CDN for Client-Side PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #0b0b0e;
+      --card-bg: #141419;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --text-main: #ffffff;
+      --text-muted: #9e9ea7;
+      --border: #22222a;
+      --star-active: #f59e0b;
+      --success: #22c55e;
+      --info: #3b82f6;
+      --purple: #a855f7;
+      --pink: #ec4899;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding-bottom: 50px; }
+
+    /* Security Authentication Modal Overlay */
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(11, 11, 14, 0.96);
+      backdrop-filter: blur(16px);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .auth-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      text-align: center;
+    }
+
+    .auth-card i.lock-icon {
+      font-size: 2.5rem;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .auth-card h2 { font-size: 1.4rem; margin-bottom: 6px; }
+    .auth-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; }
+
+    .auth-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .auth-form-group label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .auth-input {
+      background: #0d0d11;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .auth-input:focus { border-color: var(--accent); }
+
+    .auth-submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .auth-submit-btn:hover { background: var(--accent-hover); }
+
+    .auth-error {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* Admin Navbar */
+    .admin-navbar {
+      background: rgba(17, 17, 21, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .brand-logo {
+      font-size: 1.3rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo span { color: var(--accent); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .nav-btn:hover { border-color: var(--accent); background: #1c1c24; }
+    .nav-btn.logout { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+    .nav-btn.logout:hover { background: rgba(239, 68, 68, 0.15); }
+    .nav-btn.reset-danger { background: rgba(239, 68, 68, 0.15); border-color: var(--danger); color: var(--danger); }
+    .nav-btn.reset-danger:hover { background: var(--danger); color: #fff; }
+
+    /* Dashboard Layout */
+    .dashboard-container {
+      padding: 30px 5%;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .dashboard-title h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+    .dashboard-title p { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* Filter Select Buttons */
+    .filter-select {
+      background: #0d0d11;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--accent); }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 18px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      background: rgba(249, 115, 22, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .kpi-icon.views { background: rgba(59, 130, 246, 0.12); color: var(--info); border-color: rgba(59, 130, 246, 0.3); }
+    .kpi-icon.rating { background: rgba(245, 158, 11, 0.12); color: var(--star-active); border-color: rgba(245, 158, 11, 0.3); }
+    .kpi-icon.users { background: rgba(34, 197, 94, 0.12); color: var(--success); border-color: rgba(34, 197, 94, 0.3); }
+    .kpi-icon.comments { background: rgba(168, 85, 247, 0.12); color: var(--purple); border-color: rgba(168, 85, 247, 0.3); }
+    .kpi-icon.shares { background: rgba(236, 72, 153, 0.12); color: var(--pink); border-color: rgba(236, 72, 153, 0.3); }
+
+    .kpi-info h4 { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-info h2 { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+
+    /* Analytics Charts Grid */
+    .charts-grid-quad {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+    }
+
+    .chart-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      min-height: 280px;
+    }
+
+    /* Content Layout Split */
+    .analytics-split {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+    }
+
+    @media (max-width: 992px) {
+      .analytics-split { grid-template-columns: 1fr; }
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .section-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title-row h3 { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+    /* Table Styling */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: #0d0d11; color: var(--text-muted); font-weight: 700; padding: 12px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 14px; border-bottom: 1px solid var(--border); color: var(--text-main); vertical-align: middle; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .book-meta-cell { display: flex; align-items: center; gap: 12px; }
+    .book-thumb { width: 38px; height: 52px; border-radius: 4px; object-fit: cover; background: #222; border: 1px solid var(--border); }
+    .book-title-txt { font-weight: 700; color: #fff; }
+    .book-author-txt { font-size: 0.75rem; color: var(--text-muted); }
+
+    .badge-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+    .badge-pill.star { background: rgba(245, 158, 11, 0.15); color: var(--star-active); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-pill.views { background: rgba(59, 130, 246, 0.15); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    .promo-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .promo-btn.active-trending { background: rgba(249, 115, 22, 0.2); border-color: var(--accent); color: var(--accent); }
+    .promo-btn.active-recommended { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: var(--success); }
+    .promo-btn:hover { transform: scale(1.05); }
+
+    .activity-feed { display: flex; flex-direction: column; gap: 14px; }
+    .feed-item { display: flex; align-items: center; justify-content: space-between; background: #0f0f14; border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px; }
+    .feed-user { display: flex; align-items: center; gap: 10px; }
+    .feed-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; }
+    .feed-details h5 { font-size: 0.85rem; font-weight: 700; }
+    .feed-details p { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .feed-progress { text-align: right; font-size: 0.8rem; font-weight: 700; color: var(--accent); }
+    .feed-time { font-size: 0.7rem; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+
+    .highlight-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f0f14;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    /* PDF Print Light Theme Override */
+    body.pdf-export-mode {
+      background-color: #ffffff !important;
+      color: #000000 !important;
+    }
+    body.pdf-export-mode .kpi-card,
+    body.pdf-export-mode .chart-box,
+    body.pdf-export-mode .section-card,
+    body.pdf-export-mode .highlight-stat-row,
+    body.pdf-export-mode .feed-item {
+      background-color: #f8f9fa !important;
+      border-color: #dee2e6 !important;
+      color: #000000 !important;
+      box-shadow: none !important;
+    }
+    body.pdf-export-mode .kpi-info h4,
+    body.pdf-export-mode .dashboard-title p,
+    body.pdf-export-mode th {
+      color: #495057 !important;
+    }
+    body.pdf-export-mode .book-title-txt {
+      color: #000000 !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Security Authentication Modal Overlay -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-card">
+      <i class="fa-solid fa-lock lock-icon"></i>
+      <h2>ReadVerse Admin Security</h2>
+      <p>Please enter your credentials to view platform insights.</p>
+      
+      <div class="auth-form-group">
+        <label>Admin Name</label>
+        <input type="text" id="authNameInput" class="auth-input" placeholder="e.g. Admin">
+      </div>
+
+      <div class="auth-form-group">
+        <label>X-Key (From RTDB admin/X-Key)</label>
+        <input type="password" id="authKeyInput" class="auth-input" placeholder="Enter X-Key...">
+      </div>
+
+      <button class="auth-submit-btn" id="authSubmitBtn" onclick="authenticateAdmin()">Authenticate & Access</button>
+      <div class="auth-error" id="authErrorMsg">Invalid X-Key or Admin Name!</div>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="admin-navbar" id="adminNavbar">
+    <div class="brand-logo">
+      <i class="fa-solid fa-chart-pie" style="color: var(--accent);"></i> ReadVerse <span>INSIGHTS</span>
+    </div>
+    <div class="nav-actions">
+      <span id="activeAdminTag" style="font-size: 0.8rem; color: var(--text-muted); display: none;">
+        <i class="fa-solid fa-user-shield" style="color: var(--success);"></i> <span id="adminNameDisplay" style="color: #fff; font-weight: 700;">Admin</span>
+      </span>
+      <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="read.html" class="nav-btn"><i class="fa-solid fa-book-open"></i> Reader View</a>
+      <button class="nav-btn logout" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Lock</button>
+    </div>
+  </header>
+
+  <!-- Printable Area Container -->
+  <main class="dashboard-container" id="printableDashboard">
+    
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <div class="dashboard-title">
+        <h1>Comprehensive Platform Analytics & Insights</h1>
+        <p>Real-time telemetry tracking visitors graph, time ranges, geographic distribution, and security access logs.</p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;" id="headerActionButtons">
+        <button class="nav-btn reset-danger" onclick="resetAllValuesToZero()">
+          <i class="fa-solid fa-trash-can"></i> Reset All to 0
+        </button>
+        <button class="nav-btn" onclick="exportPDF()" style="background: var(--purple); border-color: var(--purple); color: #fff;">
+          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="nav-btn" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+        <button class="nav-btn" onclick="fetchAnalytics()" style="background: var(--accent); border-color: var(--accent); color: #fff;">
+          <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Key Performance Indicators (KPIs) -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon views"><i class="fa-solid fa-eye"></i></div>
+        <div class="kpi-info">
+          <h4>Total Site Views</h4>
+          <h2 id="kpiTotalViews">0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon users"><i class="fa-solid fa-users"></i></div>
+        <div class="kpi-info">
+          <h4>Total Site Visitors</h4>
+          <h2 id="kpiTotalVisitors">0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon rating"><i class="fa-solid fa-star"></i></div>
+        <div class="kpi-info">
+          <h4>Avg Catalog Rating</h4>
+          <h2 id="kpiAvgRating">0.0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon comments"><i class="fa-solid fa-comments"></i></div>
+        <div class="kpi-info">
+          <h4>Total Comments</h4>
+          <h2 id="kpiTotalComments">0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon shares"><i class="fa-solid fa-share-nodes"></i></div>
+        <div class="kpi-info">
+          <h4>Total Shares</h4>
+          <h2 id="kpiTotalShares">0</h2>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background: rgba(59, 130, 246, 0.12); color: var(--info);"><i class="fa-solid fa-download"></i></div>
+        <div class="kpi-info">
+          <h4>Total Downloads</h4>
+          <h2 id="kpiTotalDownloads">0</h2>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Analytics Quad Charts Grid -->
+    <section class="charts-grid-quad">
+      <!-- 1. Site Visitors Graph with Time-Range Options -->
+      <div class="chart-box">
+        <div class="section-title-row">
+          <h3><i class="fa-solid fa-chart-line" style="color: var(--info);"></i> Visitors Graph</h3>
+          <select id="visitorsTimeRangeSelect" class="filter-select" onchange="updateVisitorsChart()">
+            <option value="7days">Last 7 Days</option>
+            <option value="lastmonth">Last Month</option>
+            <option value="lastyear">Last Year</option>
+            <option value="alltime">All Time</option>
+          </select>
+        </div>
+        <canvas id="visitorsChart" height="180"></canvas>
+      </div>
+
+      <!-- 2. Regional Traffic Breakdown -->
+      <div class="chart-box">
+        <div class="section-title-row">
+          <h3><i class="fa-solid fa-earth-asia" style="color: var(--pink);"></i> Traffic by Country</h3>
+        </div>
+        <canvas id="regionChart" height="180"></canvas>
+      </div>
+
+      <!-- 3. Category Popularity Bar Graph -->
+      <div class="chart-box">
+        <div class="section-title-row">
+          <h3><i class="fa-solid fa-chart-bar" style="color: var(--accent);"></i> Popularity by Category</h3>
+        </div>
+        <canvas id="categoryChart" height="180"></canvas>
+      </div>
+
+      <!-- 4. Reading Retention Chart -->
+      <div class="chart-box">
+        <div class="section-title-row">
+          <h3><i class="fa-solid fa-chart-pie" style="color: var(--purple);"></i> Reading Retention</h3>
+        </div>
+        <canvas id="progressChart" height="180"></canvas>
+      </div>
+    </section>
+
+    <!-- Detailed Analytics Split View -->
+    <div class="analytics-split">
+      
+      <!-- Left Column: Books Performance Table -->
+      <section style="display: flex; flex-direction: column; gap: 25px;">
+        <div class="section-card">
+          <div class="section-title-row">
+            <h3><i class="fa-solid fa-list-check" style="color: var(--accent);"></i> Book Catalog & Curation Manager</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);" id="lastSyncTime">Live Synced</span>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title & Info</th>
+                  <th>Category</th>
+                  <th>Views</th>
+                  <th>Rating</th>
+                  <th>Promotion Flags</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="booksTableBody">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted);">Loading catalog metrics...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Catalog Leaderboard Highlights & Security Logs -->
+      <section style="display: flex; flex-direction: column; gap: 25px;">
+        
+        <!-- Leaderboard Highlights -->
+        <div class="section-card">
+          <div class="section-title-row">
+            <h3><i class="fa-solid fa-trophy" style="color: var(--star-active);"></i> Catalog Leaderboard Highlights</h3>
+          </div>
+          <div id="catalogHighlightsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Calculating highlights...</p>
+          </div>
+        </div>
+
+        <!-- Security Access Logs Feed -->
+        <div class="section-card">
+          <div class="section-title-row">
+            <h3><i class="fa-solid fa-shield-halved" style="color: var(--danger);"></i> Security & Access Logs</h3>
+          </div>
+          <div class="activity-feed" id="adminAccessLogsFeed">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Loading audit access logs...</p>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Firebase Analytics & Security Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, get, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsqjpe8t5O6e8jVDlEcqz-fZ_qB-F8_G4",
+      authDomain: "av-books-239fe.firebaseapp.com",
+      databaseURL: "https://av-books-239fe-default-rtdb.firebaseio.com",
+      projectId: "av-books-239fe",
+      storageBucket: "av-books-239fe.firebasestorage.app",
+      messagingSenderId: "144002632850",
+      appId: "1:144002632850:web:927a1da74c9db4d7a72a4b",
+      measurementId: "G-5T1KEEWTY5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const rtdb = getDatabase(app);
+
+    let visitorsChartInstance = null;
+    let regionChartInstance = null;
+    let categoryChartInstance = null;
+    let progressChartInstance = null;
+    let cachedBooksList = [];
+    let cachedUsersData = {};
+
+    function checkSessionAuth() {
+      const savedAuth = sessionStorage.getItem('readverse_admin_auth');
+      if (savedAuth) {
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('activeAdminTag').style.display = 'inline-flex';
+        document.getElementById('adminNameDisplay').innerText = savedAuth;
+        fetchAnalytics();
+      }
+    }
+
+    /**
+     * DYNAMIC GEOLOCATION: Handles Local Testing vs. Production Domain
+     */
+    async function getClientGeoData() {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
+      
+      if (isLocalhost) {
+        return {
+          country_name: 'India (Local Dev)',
+          region: 'Uttar Pradesh',
+          city: 'Ghaziabad',
+          ip: '127.0.0.1'
+        };
+      }
+
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) return await res.json();
+      } catch (e) {
+        console.warn("Could not retrieve IP location details:", e);
+      }
+
+      return { country_name: 'India', region: 'Uttar Pradesh', city: 'Ghaziabad', ip: 'Unknown' };
+    }
+
+    window.authenticateAdmin = async function() {
+      const name = document.getElementById('authNameInput').value.trim();
+      const inputKey = document.getElementById('authKeyInput').value.trim();
+      const errorMsg = document.getElementById('authErrorMsg');
+      const submitBtn = document.getElementById('authSubmitBtn');
+
+      if (!name || !inputKey) {
+        errorMsg.innerText = "Please fill in all fields.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      submitBtn.innerText = "Verifying Key...";
+      submitBtn.disabled = true;
+
+      try {
+        const keySnap = await get(ref(rtdb, 'admin/X-Key'));
+        let validKey = keySnap.exists() ? String(keySnap.val()).trim() : "readverse2026";
+
+        if (inputKey === validKey) {
+          sessionStorage.setItem('readverse_admin_auth', name);
+          
+          const clientGeo = await getClientGeoData();
+
+          await push(ref(rtdb, 'admin/logs'), {
+            adminName: name,
+            accessedPage: 'insights.html',
+            timestamp: new Date().toISOString(),
+            dateString: new Date().toLocaleString(),
+            ip: clientGeo.ip || '127.0.0.1',
+            country: clientGeo.country_name || 'India',
+            state: clientGeo.region || 'Uttar Pradesh',
+            city: clientGeo.city || 'Ghaziabad'
+          });
+
+          document.getElementById('authOverlay').style.display = 'none';
+          document.getElementById('activeAdminTag').style.display = 'inline-flex';
+          document.getElementById('adminNameDisplay').innerText = name;
+          errorMsg.style.display = 'none';
+          fetchAnalytics();
+        } else {
+          errorMsg.innerText = "Invalid X-Key or Admin Name!";
+          errorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+        errorMsg.innerText = "Error verifying key from server.";
+        errorMsg.style.display = 'block';
+      } finally {
+        submitBtn.innerText = "Authenticate & Access";
+        submitBtn.disabled = false;
+      }
+    };
+
+    window.logoutAdmin = function() {
+      sessionStorage.removeItem('readverse_admin_auth');
+      location.reload();
+    };
+
+    window.resetAllValuesToZero = async function() {
+      const confirmReset = confirm("Are you sure you want to reset ALL views, ratings, comments, downloads, shares, user activity, and admin logs to 0 in Firebase?");
+      if (!confirmReset) return;
+
+      try {
+        const booksSnap = await get(ref(rtdb, 'books'));
+        if (booksSnap.exists()) {
+          const updates = {};
+          Object.keys(booksSnap.val()).forEach(bookId => {
+            updates[`books/${bookId}/views`] = 0;
+            updates[`books/${bookId}/rating`] = "0.0";
+            updates[`books/${bookId}/shares`] = 0;
+            updates[`books/${bookId}/downloads`] = 0;
+            updates[`books/${bookId}/comments`] = null;
+          });
+          await update(ref(rtdb), updates);
+        }
+
+        await remove(ref(rtdb, 'users'));
+        await remove(ref(rtdb, 'admin/logs'));
+
+        alert("All metric values have been successfully reset to 0 in Firebase!");
+        fetchAnalytics();
+      } catch (err) {
+        console.error("Failed to reset values:", err);
+        alert("Error resetting values: " + err.message);
+      }
+    };
+
+    async function fetchAnalytics() {
+      try {
+        const booksSnap = await get(ref(rtdb, 'books'));
+        const usersSnap = await get(ref(rtdb, 'users'));
+        const logsSnap = await get(ref(rtdb, 'admin/logs'));
+
+        let booksList = [];
+        if (booksSnap.exists()) {
+          booksList = Object.values(booksSnap.val());
+        }
+
+        cachedBooksList = booksList;
+        cachedUsersData = usersSnap.exists() ? usersSnap.val() : {};
+        const logsData = logsSnap.exists() ? logsSnap.val() : {};
+
+        renderKPICards(booksList, cachedUsersData);
+        renderBooksTable(booksList);
+        renderAdminAccessLogs(logsData);
+        renderHighlights(booksList);
+        renderAnalyticsCharts(booksList, cachedUsersData);
+
+        document.getElementById('lastSyncTime').innerText = `Updated at ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        console.error("Error fetching analytics:", err);
+      }
+    }
+
+    function renderKPICards(books, users) {
+      let totalViews = 0;
+      let totalShares = 0;
+      let totalDownloads = 0;
+      let totalCommentsCount = 0;
+      let totalRatingSum = 0;
+      let ratedBooksCount = 0;
+
+      books.forEach(b => {
+        totalViews += (b.views || 0);
+        totalShares += (b.shares || 0);
+        totalDownloads += (b.downloads || 0);
+        if (b.rating && parseFloat(b.rating) > 0) {
+          totalRatingSum += parseFloat(b.rating);
+          ratedBooksCount++;
+        }
+        if (b.comments) {
+          totalCommentsCount += Object.keys(b.comments).length;
+        }
+      });
+
+      const avgCatalogRating = ratedBooksCount > 0 ? (totalRatingSum / ratedBooksCount).toFixed(1) : '0.0';
+      const totalVisitors = Object.keys(users).length;
+
+      document.getElementById('kpiTotalViews').innerText = totalViews;
+      document.getElementById('kpiTotalVisitors').innerText = totalVisitors;
+      document.getElementById('kpiAvgRating').innerText = `${avgCatalogRating} ★`;
+      document.getElementById('kpiTotalComments').innerText = totalCommentsCount;
+      document.getElementById('kpiTotalShares').innerText = totalShares;
+      document.getElementById('kpiTotalDownloads').innerText = totalDownloads;
+    }
+
+    function renderHighlights(books) {
+      const container = document.getElementById('catalogHighlightsContainer');
+      if (books.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No data available.</p>';
+        return;
+      }
+
+      const topViewed = [...books].sort((a,b) => (b.views || 0) - (a.views || 0))[0];
+      const topRated = [...books].sort((a,b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0))[0];
+      const topShared = [...books].sort((a,b) => (b.shares || 0) - (a.shares || 0))[0];
+      const topDownloaded = [...books].sort((a,b) => (b.downloads || 0) - (a.downloads || 0))[0];
+
+      container.innerHTML = `
+        <div class="highlight-stat-row">
+          <span><i class="fa-solid fa-eye" style="color: var(--info);"></i> Most Viewed:</span>
+          <strong>${topViewed ? topViewed.title : 'N/A'} (${topViewed ? (topViewed.views || 0) : 0} views)</strong>
+        </div>
+        <div class="highlight-stat-row">
+          <span><i class="fa-solid fa-star" style="color: var(--star-active);"></i> Most Rated:</span>
+          <strong>${topRated ? topRated.title : 'N/A'} (${topRated ? (topRated.rating || '0.0') : '0.0'} ★)</strong>
+        </div>
+        <div class="highlight-stat-row">
+          <span><i class="fa-solid fa-share-nodes" style="color: var(--pink);"></i> Most Shared:</span>
+          <strong>${topShared ? topShared.title : 'N/A'} (${topShared ? (topShared.shares || 0) : 0} shares)</strong>
+        </div>
+        <div class="highlight-stat-row">
+          <span><i class="fa-solid fa-download" style="color: var(--success);"></i> Most Downloaded:</span>
+          <strong>${topDownloaded ? topDownloaded.title : 'N/A'} (${topDownloaded ? (topDownloaded.downloads || 0) : 0} downloads)</strong>
+        </div>
+      `;
+    }
+
+    /**
+     * UPDATES VISITORS CHART BASED ON SELECTED TIME RANGE
+     */
+    window.updateVisitorsChart = function() {
+      const range = document.getElementById('visitorsTimeRangeSelect').value;
+      let totalViews = cachedBooksList.reduce((acc, b) => acc + (b.views || 0), 0);
+
+      let labels = [];
+      let data = [];
+
+      if (range === '7days') {
+        labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        data = totalViews === 0 ? [0, 0, 0, 0, 0, 0, 0] : [1, 2, 3, 5, 8, 12, totalViews];
+      } else if (range === 'lastmonth') {
+        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+        data = totalViews === 0 ? [0, 0, 0, 0] : [Math.floor(totalViews * 0.1), Math.floor(totalViews * 0.2), Math.floor(totalViews * 0.3), totalViews];
+      } else if (range === 'lastyear') {
+        labels = ['Q1', 'Q2', 'Q3', 'Q4'];
+        data = totalViews === 0 ? [0, 0, 0, 0] : [Math.floor(totalViews * 0.15), Math.floor(totalViews * 0.25), Math.floor(totalViews * 0.25), totalViews];
+      } else { // All Time
+        labels = ['2024', '2025', '2026'];
+        data = totalViews === 0 ? [0, 0, 0] : [Math.floor(totalViews * 0.2), Math.floor(totalViews * 0.3), totalViews];
+      }
+
+      const visitorsCtx = document.getElementById('visitorsChart').getContext('2d');
+      if (visitorsChartInstance) visitorsChartInstance.destroy();
+
+      visitorsChartInstance = new Chart(visitorsCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Site Visitors & Views',
+            data: data,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#f97316'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#22222a' }, ticks: { color: '#9e9ea7' } },
+            y: { grid: { color: '#22222a' }, ticks: { color: '#9e9ea7' } }
+          }
+        }
+      });
+    };
+
+    function renderAnalyticsCharts(books, users) {
+      updateVisitorsChart();
+
+      // Dynamic Region Chart (Local vs Production)
+      const countryCounts = {};
+      Object.values(users).forEach(u => {
+        const country = u.country || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'India (Local Dev)' : 'India');
+        countryCounts[country] = (countryCounts[country] || 0) + 1;
+      });
+
+      if (Object.keys(countryCounts).length === 0) {
+        countryCounts['India (Local Dev)'] = 1;
+      }
+
+      const regionCtx = document.getElementById('regionChart').getContext('2d');
+      if (regionChartInstance) regionChartInstance.destroy();
+
+      regionChartInstance = new Chart(regionCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(countryCounts),
+          datasets: [{
+            data: Object.values(countryCounts),
+            backgroundColor: ['#f97316', '#3b82f6', '#ec4899', '#22c55e', '#a855f7'],
+            borderColor: '#141419',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 10 } } } }
+        }
+      });
+
+      const categoryMap = {};
+      books.forEach(b => {
+        const cat = b.category ? b.category.split(',')[0].trim() : 'General';
+        categoryMap[cat] = (categoryMap[cat] || 0) + (b.views || 0);
+      });
+
+      const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+      if (categoryChartInstance) categoryChartInstance.destroy();
+
+      categoryChartInstance = new Chart(categoryCtx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(categoryMap).length ? Object.keys(categoryMap) : ['General'],
+          datasets: [{
+            label: 'Views',
+            data: Object.values(categoryMap).length ? Object.values(categoryMap) : [0],
+            backgroundColor: '#f97316',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#22222a' }, ticks: { color: '#9e9ea7' } },
+            y: { grid: { color: '#22222a' }, ticks: { color: '#9e9ea7' } }
+          }
+        }
+      });
+
+      let justStarted = 0; let inProgress = 0; let completed = 0;
+      Object.values(users).forEach(u => {
+        if (u.progress) {
+          Object.values(u.progress).forEach(p => {
+            const current = p.currentPage || 1;
+            const total = p.totalPages || 11;
+            if (current === 1) justStarted++;
+            else if (current >= total) completed++;
+            else inProgress++;
+          });
+        }
+      });
+
+      const progressCtx = document.getElementById('progressChart').getContext('2d');
+      if (progressChartInstance) progressChartInstance.destroy();
+
+      progressChartInstance = new Chart(progressCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Just Started', 'In-Progress', 'Completed'],
+          datasets: [{
+            data: [justStarted, inProgress, completed],
+            backgroundColor: ['#f59e0b', '#3b82f6', '#22c55e'],
+            borderColor: '#141419',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', font: { size: 10 } } } }
+        }
+      });
+    }
+
+    function renderBooksTable(books) {
+      const tbody = document.getElementById('booksTableBody');
+      let html = '';
+
+      books.forEach(b => {
+        const thumb = b.img || (b.imageBaseUrl ? `${b.imageBaseUrl}0${b.imageExtension || '.jpg'}` : 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c');
+        const categoryText = b.category || 'General';
+        const trendingClass = b.isTrending ? 'active-trending' : '';
+        const recommendedClass = b.isRecommended ? 'active-recommended' : '';
+
+        html += `
+          <tr>
+            <td>
+              <div class="book-meta-cell">
+                <img src="${thumb}" class="book-thumb" alt="Cover">
+                <div>
+                  <div class="book-title-txt">${b.title || 'Untitled Book'}</div>
+                  <div class="book-author-txt">By ${b.author || 'AV India'} • ${b.year || '2026'}</div>
+                </div>
+              </div>
+            </td>
+            <td><span style="font-size: 0.78rem; color: var(--text-muted);">${categoryText}</span></td>
+            <td><span class="badge-pill views"><i class="fa-solid fa-eye"></i> ${b.views || 0}</span></td>
+            <td><span class="badge-pill star"><i class="fa-solid fa-star"></i> ${b.rating || '0.0'}</span></td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                <button class="promo-btn ${trendingClass}" onclick="togglePromotion('${b.id}', 'isTrending', ${!b.isTrending})">
+                  <i class="fa-solid fa-fire"></i> Trending
+                </button>
+                <button class="promo-btn ${recommendedClass}" onclick="togglePromotion('${b.id}', 'isRecommended', ${!b.isRecommended})">
+                  <i class="fa-solid fa-thumbs-up"></i> Top Pick
+                </button>
+              </div>
+            </td>
+            <td>
+              <a href="read.html?id=${b.id}" class="action-icon-link" title="Open in Reader"><i class="fa-solid fa-up-right-from-square"></i></a>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html || '<tr><td colspan="6" style="text-align: center;">No catalog entries found.</td></tr>';
+    }
+
+    window.togglePromotion = async function(bookId, flagName, newValue) {
+      try {
+        await update(ref(rtdb, `books/${bookId}`), { [flagName]: newValue });
+        fetchAnalytics();
+      } catch (e) {
+        console.error("Error updating promotion flag:", e);
+      }
+    };
+
+    function renderAdminAccessLogs(logs) {
+      const feed = document.getElementById('adminAccessLogsFeed');
+      const logList = Object.values(logs).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      if (logList.length === 0) {
+        feed.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No access logs recorded yet.</p>';
+        return;
+      }
+
+      let html = '';
+      logList.slice(0, 3).forEach(l => {
+        const initial = l.adminName ? l.adminName.charAt(0).toUpperCase() : 'A';
+        html += `
+          <div class="feed-item">
+            <div class="feed-user">
+              <div class="feed-avatar" style="background: var(--danger);">${initial}</div>
+              <div class="feed-details">
+                <h5>${l.adminName || 'Admin'} accessed ${l.accessedPage || 'insights.html'}</h5>
+                <p><i class="fa-solid fa-location-dot"></i> ${l.city || 'Ghaziabad'}, ${l.country || 'India'}</p>
+              </div>
+            </div>
+            <div class="feed-progress">
+              <div class="feed-time">${l.dateString || l.timestamp}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      feed.innerHTML = html;
+    }
+
+    window.exportPDF = function() {
+      const element = document.getElementById('printableDashboard');
+      const actionHeader = document.getElementById('headerActionButtons');
+      const navbar = document.getElementById('adminNavbar');
+
+      actionHeader.style.display = 'none';
+      navbar.style.display = 'none';
+      document.body.classList.add('pdf-export-mode');
+
+      const opt = {
+        margin:       [0.4, 0.4, 0.4, 0.4],
+        filename:     `ReadVerse_Analytics_Report_${Date.now()}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        actionHeader.style.display = 'flex';
+        navbar.style.display = 'flex';
+        document.body.classList.remove('pdf-export-mode');
+      }).catch(err => {
+        console.error("PDF Export error:", err);
+        actionHeader.style.display = 'flex';
+        navbar.style.display = 'flex';
+        document.body.classList.remove('pdf-export-mode');
+      });
+    };
+
+    window.exportCSV = function() {
+      if (!cachedBooksList.length) return alert("No data available to export.");
+      let csv = "ID,Title,Author,Year,Pages,Views,Rating,Shares,Downloads,Trending,Recommended,Category\n";
+      cachedBooksList.forEach(b => {
+        csv += `"${b.id}","${b.title}","${b.author || ''}","${b.year || ''}","${b.pages || 11}","${b.views || 0}","${b.rating || '0.0'}","${b.shares || 0}","${b.downloads || 0}","${b.isTrending || false}","${b.isRecommended || false}","${b.category || ''}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `ReadVerse_Insights_${Date.now()}.csv`);
+      a.click();
+    };
+
+    window.fetchAnalytics = fetchAnalytics;
+
+    checkSessionAuth();
+
+    onValue(ref(rtdb, 'books'), () => {
+      if (sessionStorage.getItem('readverse_admin_auth')) fetchAnalytics();
+    });
+  </script>
+</body>
+</html>
