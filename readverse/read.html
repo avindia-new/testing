@@ -7,6 +7,9 @@
   
   <!-- Font Awesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- jsPDF CDN for client-side Image to PDF conversion -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 
   <style>
     :root {
@@ -695,6 +698,21 @@
       <button class="page-nav-btn" id="nextPageBtn" onclick="changePage(1)">Next <i class="fa-solid fa-arrow-right"></i></button>
     </div>
   </div>
+<!-- PDF Generation Progress Modal Overlay -->
+<div id="pdfProgressModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 11, 14, 0.85); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center;">
+  <div style="background: #141419; border: 1px solid #22222a; padding: 28px; border-radius: 12px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+    <i class="fa-solid fa-file-pdf" style="font-size: 2.2rem; color: #a855f7; margin-bottom: 12px;"></i>
+    <h3 style="color: #fff; font-size: 1.1rem; margin-bottom: 6px;">Compiling Book PDF</h3>
+    <p id="pdfProgressText" style="color: #9e9ea7; font-size: 0.85rem; margin-bottom: 18px;">Downloading page 0 of 0...</p>
+    
+    <!-- Progress Bar Track -->
+    <div style="width: 100%; background: #22222a; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+      <div id="pdfProgressBar" style="width: 0%; background: #f97316; height: 100%; transition: width 0.2s ease;"></div>
+    </div>
+    
+    <span id="pdfProgressPct" style="color: #fff; font-size: 0.82rem; font-weight: 700;">0%</span>
+  </div>
+</div>
 
   <!-- Bottom Navigation -->
   <!--  <div class="bottom-nav">
@@ -1105,13 +1123,124 @@
       else { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }
     };
 
-    window.downloadBook = () => alert('Downloading book images for offline mode...');
+    window.downloadBookOld = () => alert('Downloading book images for offline mode...');
     window.toggleMute = () => {
       const icon = document.getElementById('muteIcon');
       icon.className = icon.classList.contains('fa-volume-xmark') ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
     };
 
     loadBookData();
+  /**
+ * CONVERTS ALL BOOK PAGE IMAGES TO PDF AND TRIGGERS DOWNLOAD
+ */
+window.downloadBook = async function() {
+  if (!currentBook) {
+    alert("Book details not loaded yet!");
+    return;
+  }
+
+  const modal = document.getElementById('pdfProgressModal');
+  const progressBar = document.getElementById('pdfProgressBar');
+  const progressText = document.getElementById('pdfProgressText');
+  const progressPct = document.getElementById('pdfProgressPct');
+
+  modal.style.display = 'flex';
+  progressBar.style.width = '0%';
+  progressPct.innerText = '0%';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const totalPages = currentBook.pages || 1;
+    let pdf = null;
+
+    for (let i = 0; i < totalPages; i++) {
+      // Update progress status text and percentage
+      const percent = Math.round(((i + 1) / totalPages) * 100);
+      progressText.innerText = `Processing page ${i + 1} of ${totalPages}...`;
+      progressBar.style.width = `${percent}%`;
+      progressPct.innerText = `${percent}%`;
+
+      // Construct page image URL
+      const pageUrl = currentBook.imageBaseUrl 
+        ? `${currentBook.imageBaseUrl}${i}${currentBook.imageExtension || '.jpg'}`
+        : `https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/${encodeURIComponent(currentBook.title)}/${i}.jpg`;
+
+      const imgData = await loadImageAsBase64(pageUrl);
+
+      if (imgData) {
+        if (!pdf) {
+          const orientation = imgData.width > imgData.height ? 'l' : 'p';
+          pdf = new jsPDF({
+            orientation: orientation,
+            unit: 'px',
+            format: [imgData.width, imgData.height]
+          });
+        } else {
+          pdf.addPage([imgData.width, imgData.height], imgData.width > imgData.height ? 'l' : 'p');
+        }
+
+        pdf.addImage(imgData.base64, 'JPEG', 0, 0, imgData.width, imgData.height);
+      }
+    }
+
+    if (pdf) {
+      progressText.innerText = `Saving PDF file...`;
+      const fileName = `${currentBook.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      pdf.save(fileName);
+
+      // Increment download counter in Firebase RTDB (books/{id}/downloads)
+      if (currentBook.id) {
+        const downloadRef = ref(rtdb, `books/${currentBook.id}/downloads`);
+        await runTransaction(downloadRef, (count) => (count || 0) + 1);
+      }
+    } else {
+      alert("Failed to load page images for PDF compilation.");
+    }
+
+  } catch (err) {
+    console.error("PDF generation failed:", err);
+    alert("Error compiling PDF document: " + err.message);
+  } finally {
+    // Hide progress modal after a brief delay
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 400);
+  }
+};
+
+/**
+ * HELPER: Loads an image URL, draws it onto an HTML Canvas, and returns Base64 & Dimensions
+ */
+function loadImageAsBase64(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous'; // Prevents canvas CORS taint
+    img.src = url;
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      const base64 = canvas.toDataURL('image/jpeg', 0.92);
+      resolve({
+        base64: base64,
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      });
+    };
+
+    img.onerror = () => {
+      console.warn(`Failed to load image at URL: ${url}`);
+      resolve(null);
+    };
+  });
+}
+
+
   </script>
 </body>
 </html>
