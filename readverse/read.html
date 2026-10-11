@@ -111,6 +111,8 @@
       font-size: 0.85rem;
       color: var(--text-muted);
       margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .badge-rating {
       background: rgba(245, 158, 11, 0.15);
@@ -120,6 +122,18 @@
       border-radius: 4px;
       font-size: 0.75rem;
       font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-views {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -247,8 +261,87 @@
       cursor: pointer;
     }
 
+    /* Comments Section & Expand/Collapse */
+    .comments-section {
+      width: 100%;
+      max-width: 650px;
+      margin-top: 25px;
+      text-align: left;
+    }
+    .comments-toggle-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+      transition: border-color 0.2s;
+    }
+    .comments-toggle-bar:hover { border-color: var(--accent); }
+    
+    .comments-collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease-out, padding 0.35s ease;
+    }
+    .comments-section.expanded .comments-collapsible-content {
+      max-height: 1000px;
+      padding-top: 15px;
+    }
+
+    .comment-input-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .comment-input {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .comment-input:focus { border-color: var(--accent); }
+    .comment-submit-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .comment-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .comment-user { font-weight: 700; color: var(--accent); }
+    .comment-text { font-size: 0.88rem; color: var(--text-main); line-height: 1.4; }
+
     /* "More Like This" Section */
-    .more-section { width: 100%; text-align: left; padding: 0 2%; margin-top: 10px; }
+    .more-section { width: 100%; max-width: 650px; text-align: left; margin-top: 35px; }
     .more-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
     
     .row-container {
@@ -260,7 +353,6 @@
     }
     .row-container::-webkit-scrollbar { height: 0px; }
 
-    /* "More Like This" Card with Overlay Badges */
     .card {
       flex: 0 0 135px;
       height: 200px;
@@ -356,8 +448,7 @@
       position: relative;
     }
 
-    /* 2D Sliding Page Container with Zoom Control */
-      .book-image-page {
+    .book-image-page {
       width: 100%;
       max-width: 650px;
       height: 75vh;
@@ -370,19 +461,11 @@
       touch-action: pan-x pan-y pinch-zoom;
       user-select: none;
       -webkit-user-select: none;
-      transition: transform 0.1s ease-out, opacity 0.1s ease-out; /* Accelerated speed */
+      transition: transform 0.1s ease-out, opacity 0.1s ease-out;
     }
 
-
-    /* 2D Horizontal Slide Transitions */
-    .book-image-page.slide-next {
-      transform: translateX(-100px);
-      opacity: 0;
-    }
-    .book-image-page.slide-prev {
-      transform: translateX(100px);
-      opacity: 0;
-    }
+    .book-image-page.slide-next { transform: translateX(-100px); opacity: 0; }
+    .book-image-page.slide-prev { transform: translateX(100px); opacity: 0; }
 
     .book-image-page img {
       max-width: 100%;
@@ -427,7 +510,6 @@
       font-weight: 600;
     }
 
-    /* Full-Screen Immersive Overrides */
     .reader-content-modal.is-fullscreen .reader-topbar,
     .reader-content-modal.is-fullscreen .page-footer-nav {
       opacity: 0;
@@ -523,6 +605,7 @@
     <div class="meta-line" id="bookMetaLine">
       <span id="bookYear">2026</span> • 
       <span class="badge-rating" id="bookRatingBadge"><i class="fa-solid fa-star"></i> 4.8</span> • 
+      <span class="badge-views" id="bookViewsBadge"><i class="fa-solid fa-eye"></i> 0 Views</span> • 
       <span id="bookLength">11 Pages</span> • 
       <span id="bookLang">Hindi</span>
     </div>
@@ -543,6 +626,24 @@
       <button class="action-item" onclick="downloadBook()"><i class="fa-solid fa-arrow-down"></i><span>Download</span></button>
       <button class="action-item" onclick="openRatingModal()"><i class="fa-regular fa-star" id="rateBtnIcon"></i><span id="rateBtnLabel">Rate</span></button>
     </div>
+
+    <!-- Collapsible Comments Section -->
+    <section class="comments-section" id="commentsSection">
+      <div class="comments-toggle-bar" onclick="toggleComments()">
+        <span><i class="fa-solid fa-comments"></i> Discussion & Comments (<span id="commentsCount">0</span>)</span>
+        <i class="fa-solid fa-chevron-down" id="commentsToggleIcon"></i>
+      </div>
+      
+      <div class="comments-collapsible-content">
+        <div class="comment-input-box" style="margin-top: 15px;">
+          <input type="text" id="commentInput" class="comment-input" placeholder="Leave your thoughts...">
+          <button class="comment-submit-btn" onclick="postComment()">Post</button>
+        </div>
+        <div class="comments-list" id="commentsList">
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Loading comments...</p>
+        </div>
+      </div>
+    </section>
 
     <!-- Dynamic "More Like This" Recommendations Shelf -->
     <section class="more-section">
@@ -605,7 +706,7 @@
   <!-- Firebase Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, get, set, update, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBsqjpe8t5O6e8jVDlEcqz-fZ_qB-F8_G4",
@@ -654,8 +755,10 @@
 
         totalPagesCount = currentBook.pages || 11;
         renderDetails(currentBook);
+        incrementViews();
         listenToRatings();
         checkUserExistingRating();
+        loadComments();
         loadMoreLikeThis();
       } catch (err) {
         console.error("Error fetching book data:", err);
@@ -668,54 +771,128 @@
       document.getElementById('bookYear').innerText = book.year || '2026';
       document.getElementById('bookLength').innerText = `${totalPagesCount} Pages`;
       if (book.img) document.getElementById('heroBanner').style.backgroundImage = `url('${book.img}')`;
+
       if (book.category) {
         const genres = book.genre.split(',').map(g => g.trim());
         document.getElementById('genreBar').innerHTML = genres.join(' <span>|</span> ');
-      } else {
-        document.getElementById('genreBar').innerHTML = 'General';
       }
     }
 
     /**
-     * CONSOLIDATED 2D SLIDING PAGE RENDERING
+     * INCREMENT REAL-TIME VIEWS COUNT
      */
-        /**
-     * ULTRA-FAST CONSOLIDATED PAGE RENDERING
+    async function incrementViews() {
+      const viewsRef = ref(rtdb, `books/${bookId}/views`);
+      const snapshot = await get(viewsRef);
+      const currentViews = snapshot.exists() ? snapshot.val() : 0;
+      const newViews = currentViews + 1;
+      
+      await update(ref(rtdb, `books/${bookId}`), { views: newViews });
+      document.getElementById('bookViewsBadge').innerHTML = `<i class="fa-solid fa-eye"></i> ${newViews} Views`;
+    }
+
+    /**
+     * COMMENTS TOGGLE & MANAGEMENT
+     */
+    window.toggleComments = function() {
+      const sectionEl = document.getElementById('commentsSection');
+      const iconEl = document.getElementById('commentsToggleIcon');
+      
+      sectionEl.classList.toggle('expanded');
+      if (sectionEl.classList.contains('expanded')) {
+        iconEl.className = 'fa-solid fa-chevron-up';
+      } else {
+        iconEl.className = 'fa-solid fa-chevron-down';
+      }
+    };
+
+    window.postComment = async function() {
+      const inputEl = document.getElementById('commentInput');
+      const text = inputEl.value.trim();
+      if (!text) return alert("Please enter a comment.");
+
+      const commentsRef = ref(rtdb, `books/${bookId}/comments`);
+      await push(commentsRef, {
+        user: localUser.name || 'Guest User',
+        text: text,
+        timestamp: Date.now()
+      });
+
+      inputEl.value = '';
+    };
+
+    function loadComments() {
+      const commentsRef = ref(rtdb, `books/${bookId}/comments`);
+      onValue(commentsRef, (snapshot) => {
+        const listEl = document.getElementById('commentsList');
+        const countEl = document.getElementById('commentsCount');
+        
+        if (snapshot.exists()) {
+          const commentsObj = snapshot.val();
+          const commentsArray = Object.values(commentsObj);
+          countEl.innerText = commentsArray.length;
+
+          let html = '';
+          commentsArray.reverse().forEach(c => {
+            const timeAgo = new Date(c.timestamp).toLocaleDateString();
+            html += `
+              <div class="comment-card">
+                <div class="comment-header">
+                  <span class="comment-user">${c.user}</span>
+                  <span>${timeAgo}</span>
+                </div>
+                <div class="comment-text">${c.text}</div>
+              </div>
+            `;
+          });
+          listEl.innerHTML = html;
+        } else {
+          countEl.innerText = '0';
+          listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No comments yet. Be the first to share your thoughts!</p>';
+        }
+      });
+    }
+
+    /**
+     * ULTRA-FAST 2D SLIDING PAGE RENDERING
      */
     window.renderPage = async function(index) {
       if (index < 0 || index >= totalPagesCount) return;
 
       const pageCard = document.getElementById('bookImagePageCard');
-      const imgEl = document.getElementById('activePageImg');
+      const slideDirection = index > currentPageIndex ? 'slide-next' : 'slide-prev';
       
-      // Update index and UI instantly with zero lag
-      currentPageIndex = index;
+      pageCard.classList.add(slideDirection);
 
-      // Construct and assign image source immediately
-      if (Array.isArray(currentBook.imagePages)) {
-        imgEl.src = currentBook.imagePages[currentPageIndex];
-      } else {
-        const baseUrl = currentBook.imageBaseUrl || "https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/ek%20Safar/";
-        const ext = currentBook.imageExtension || ".jpg";
-        imgEl.src = `${baseUrl}${currentPageIndex}${ext}`;
-      }
+      setTimeout(async () => {
+        currentPageIndex = index;
+        const imgEl = document.getElementById('activePageImg');
 
-      document.getElementById('pageIndicator').innerText = `Page ${currentPageIndex + 1} of ${totalPagesCount}`;
-      document.getElementById('prevPageBtn').disabled = currentPageIndex === 0;
-      document.getElementById('nextPageBtn').disabled = currentPageIndex === totalPagesCount - 1;
+        if (Array.isArray(currentBook.imagePages)) {
+          imgEl.src = currentBook.imagePages[currentPageIndex];
+        } else {
+          const baseUrl = currentBook.imageBaseUrl || "https://raw.githubusercontent.com/avindia-com/avbooks-database-0/main/ek%20Safar/";
+          const ext = currentBook.imageExtension || ".jpg";
+          imgEl.src = `${baseUrl}${currentPageIndex}${ext}`;
+        }
 
-      // Background sync to Firebase (non-blocking)
-      update(ref(rtdb, `users/${localUser.uid}/progress/${bookId}`), {
-        currentPage: currentPageIndex + 1,
-        totalPages: totalPagesCount,
-        lastRead: Date.now()
-      }).catch(err => console.error("Progress sync error:", err));
+        document.getElementById('pageIndicator').innerText = `Page ${currentPageIndex + 1} of ${totalPagesCount}`;
+        document.getElementById('prevPageBtn').disabled = currentPageIndex === 0;
+        document.getElementById('nextPageBtn').disabled = currentPageIndex === totalPagesCount - 1;
+
+        pageCard.classList.remove('slide-next', 'slide-prev');
+
+        await update(ref(rtdb, `users/${localUser.uid}/progress/${bookId}`), {
+          currentPage: currentPageIndex + 1,
+          totalPages: totalPagesCount,
+          lastRead: Date.now()
+        });
+      }, 150);
     };
 
     window.changePage = function(direction) {
       window.renderPage(currentPageIndex + direction);
     };
-
 
     /**
      * FULL-SCREEN READING MODE CONTROLS
@@ -810,14 +987,12 @@
     let isMultiTouch = false;
 
     stageEl.addEventListener('touchstart', (e) => {
-      // Guard against multi-touch (pinching/zooming with 2+ fingers)
       if (e.touches.length > 1) {
         isMultiTouch = true;
         return;
       }
       isMultiTouch = false;
 
-      // Guard against magnified viewport scale
       if (window.visualViewport && window.visualViewport.scale > 1.05) {
         return;
       }
@@ -827,13 +1002,11 @@
     }, { passive: true });
 
     stageEl.addEventListener('touchend', (e) => {
-      // Ignore if multi-touch occurred during gesture
       if (isMultiTouch) {
         isMultiTouch = false;
         return;
       }
 
-      // Ignore page turns if zoomed in
       if (window.visualViewport && window.visualViewport.scale > 1.05) {
         return;
       }
@@ -846,12 +1019,11 @@
       const deltaX = touchStartX - touchEndX;
       const deltaY = touchStartY - touchEndY;
 
-      // Swipe trigger: Must be predominantly horizontal and > 50px
       if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
         if (deltaX > 0) {
-          changePage(1);  // Swipe Left -> Next Page
+          changePage(1);  // Next Page
         } else {
-          changePage(-1); // Swipe Right -> Previous Page
+          changePage(-1); // Previous Page
         }
       }
     }, { passive: true });
